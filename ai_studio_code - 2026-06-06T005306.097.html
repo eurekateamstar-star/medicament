@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>藥物小卡</title>
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; background-color: #f4f4f4;}
+        #message { margin-top: 20px; font-size: 18px; color: #333; }
+        .loader { border: 5px solid #f3f3f3; border-top: 5px solid #00B900; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="loader" id="loader"></div>
+    <div id="message">載入藥物小卡中...</div>
+
+    <!-- 1. 載入 LIFF SDK -->
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+    <!-- 2. 使用 ES Module 載入 Firebase (這裡改成 CDN 方式比較適合靜態網頁) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+
+        // ====== 這裡貼上你圖三的 Firebase Config ======
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9oJirgoJCTu7H-ODfSpfWC8OE5fqze...", // 請填入你完整的 apiKey
+            authDomain: "clawone-6445c.firebaseapp.com",
+            projectId: "clawone-6445c",
+            storageBucket: "clawone-6445c.firebasestorage.app",
+            messagingSenderId: "945236029933",
+            appId: "1:945236029933:web:f93ffb9e6f8b41aebd37e4"
+        };
+        // ==============================================
+
+        // 3. 你的 LIFF ID (步驟四會取得，先留空或填入)
+        const myLiffId = "你的_LIFF_ID_請填這裡"; 
+
+        // 初始化 Firebase
+        const app = initializeApp(firebaseConfig);
+        const storage = getStorage(app);
+
+        // 主程式：初始化 LIFF 並取得 PDF
+        async function main() {
+            try {
+                // 初始化 LIFF
+                await liff.init({ liffId: myLiffId });
+                
+                if (!liff.isLoggedIn()) {
+                    liff.login(); // 如果沒登入LINE，要求登入
+                    return;
+                }
+
+                document.getElementById('message').innerText = "取得檔案連結中...";
+
+                // 指定 Firebase Storage 中 PDF 的路徑 (例如你在 inv 資料夾下放了 card.pdf)
+                const pdfRef = ref(storage, 'inv/你的檔案名稱.pdf'); // <--- 這裡記得改檔名
+
+                // 取得下載網址
+                const url = await getDownloadURL(pdfRef);
+                
+                document.getElementById('message').innerText = "開啟中...";
+                
+                // 取得網址後，直接將網頁導向該 PDF 網址，LINE 瀏覽器會自動預覽 PDF
+                window.location.replace(url);
+
+            } catch (error) {
+                console.error("發生錯誤:", error);
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('message').innerText = "載入失敗，請稍後再試。" + error.message;
+            }
+        }
+
+        // 執行主程式
+        main();
+    </script>
+</body>
+</html>
