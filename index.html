@@ -13,66 +13,59 @@
 </head>
 <body>
     <div class="loader" id="loader"></div>
-    <div id="message">載入藥物小卡中...</div>
+    <div id="message">正在為您開啟藥物小卡...</div>
 
     <!-- 1. 載入 LIFF SDK -->
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
-    <!-- 2. 使用 ES Module 載入 Firebase (這裡改成 CDN 方式比較適合靜態網頁) -->
+    <!-- 2. 載入 Firebase SDK (使用瀏覽器專用的 CDN 連結) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-        // ====== 這裡貼上你圖三的 Firebase Config ======
+        // 你的 Firebase 設定
         const firebaseConfig = {
-            apiKey: "AIzaSyD9oJirgoJCTu7H-ODfSpfWC8OE5fqze...", // 請填入你完整的 apiKey
+            apiKey: "AIzaSyD9oJirgoJCTU7h-ODfSpfwC80E5fqze2A",
             authDomain: "clawone-6445c.firebaseapp.com",
             projectId: "clawone-6445c",
             storageBucket: "clawone-6445c.firebasestorage.app",
             messagingSenderId: "945236029933",
-            appId: "1:945236029933:web:f93ffb9e6f8b41aebd37e4"
+            appId: "1:945236029933:web:f93ffb9e6f8b41aebd37e4",
+            measurementId: "G-JEB18KRCXS"
         };
-        // ==============================================
-
-        // 3. 你的 LIFF ID (步驟四會取得，先留空或填入)
-        const myLiffId = "你的_LIFF_ID_請填這裡"; 
 
         // 初始化 Firebase
         const app = initializeApp(firebaseConfig);
         const storage = getStorage(app);
 
-        // 主程式：初始化 LIFF 並取得 PDF
+        // 初始化 LIFF 
         async function main() {
             try {
-                // 初始化 LIFF
-                await liff.init({ liffId: myLiffId });
+                // 使用你截圖中的 LIFF ID
+                await liff.init({ liffId: "2010309703-y5s1PA3N" });
                 
-                if (!liff.isLoggedIn()) {
-                    liff.login(); // 如果沒登入LINE，要求登入
-                    return;
-                }
+                document.getElementById('message').innerText = "取得檔案中...";
 
-                document.getElementById('message').innerText = "取得檔案連結中...";
+                // 👇👇👇 注意！請把 "your_file_name.pdf" 換成你實際在 Storage 裡面的 PDF 檔名 👇👇👇
+                const pdfPath = 'inv/your_file_name.pdf'; 
+                const pdfRef = ref(storage, pdfPath);
 
-                // 指定 Firebase Storage 中 PDF 的路徑 (例如你在 inv 資料夾下放了 card.pdf)
-                const pdfRef = ref(storage, 'inv/你的檔案名稱.pdf'); // <--- 這裡記得改檔名
-
-                // 取得下載網址
+                // 取得 Firebase Storage 檔案的下載網址
                 const url = await getDownloadURL(pdfRef);
                 
                 document.getElementById('message').innerText = "開啟中...";
                 
-                // 取得網址後，直接將網頁導向該 PDF 網址，LINE 瀏覽器會自動預覽 PDF
+                // 將網頁轉向到 PDF 網址，LINE 會自動預覽
                 window.location.replace(url);
 
             } catch (error) {
                 console.error("發生錯誤:", error);
                 document.getElementById('loader').style.display = 'none';
-                document.getElementById('message').innerText = "載入失敗，請稍後再試。" + error.message;
+                document.getElementById('message').innerText = "讀取失敗：" + error.message;
             }
         }
 
-        // 執行主程式
+        // 執行
         main();
     </script>
 </body>
