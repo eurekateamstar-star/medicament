@@ -430,13 +430,17 @@
 
     async function initLiff() {
         try {
-            await liff.init({ liffId: "2010390576-JZN69E3p" });
+            // 藥物資料與 LIFF 同步並行，不互相等待 → 秒燈
+            const [, liffReady] = await Promise.allSettled([
+                loadDrugsFromFirebase(),
+                liff.init({ liffId: "2010390576-JZN69E3p" })
+            ]);
+            if (liffReady.status === "rejected") { showToast("LINE 初始化失敗"); return; }
             if (!liff.isLoggedIn()) { liff.login(); return; }
             const p = await liff.getProfile();
             currentUserId   = p.userId;
             currentUserName = p.displayName;
             await checkAndInitAdmin(currentUserId, currentUserName);
-            await loadDrugsFromFirebase();
         } catch { showToast("系統初始化失敗"); }
     }
 
