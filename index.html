@@ -8,21 +8,25 @@
     <style>
         :root { --primary: #d32f2f; --bg: #f4f6f9; }
         
-        /* 背景變成深灰色桌面，讓中間的「書本」更立體 */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #e0e4e8; margin: 0; padding: 0; display: flex; justify-content: center; -webkit-tap-highlight-color: transparent; overflow: hidden; }
+        /* 確保螢幕高度 100%，並讓背景為深灰 */
+        html, body { height: 100%; margin: 0; padding: 0; background-color: #e0e4e8; display: flex; justify-content: center; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; overflow: hidden; }
         
-        /* 📖 書本主體設計 (限制寬度、置中、加陰影) */
-        .app-container { width: 100%; max-width: 450px; background-color: var(--bg); min-height: 100vh; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; }
+        /* 📖 APP 主容器 (完美適應手機高度並可捲動) */
+        .app-container { width: 100%; max-width: 450px; background-color: var(--bg); height: 100%; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.15); }
 
-        .app-header { background-color: var(--primary); color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; box-sizing: border-box;}
+        /* 頂部導航 */
+        .app-header { background-color: var(--primary); color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; flex: 0 0 auto; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         
-        .page { display: none; flex: 1; overflow-y: auto; padding-bottom: 70px; }
+        /* 頁面共同設定 */
+        .page { display: none; flex: 1 1 auto; overflow-y: auto; position: relative; }
         .page.active { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- 活頁簿版面設計 --- */
+        /* --- 頁面1：活頁簿版面 --- */
+        #page-list { padding: 0; } /* 活頁簿不需要外距 */
         .binder-layout { display: flex; height: 100%; width: 100%; }
-        .content-area { flex: 1; overflow-y: auto; padding: 15px; padding-right: 5px; }
+        .content-area { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 90px; } /* 留空間給底部導航 */
+        
         .drug-card { background: white; border-left: 5px solid var(--primary); border-radius: 8px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .drug-card:active { transform: scale(0.98); background-color: #f0f0f0; }
         .drug-info { flex: 1; }
@@ -36,32 +40,33 @@
 
         .bg-heart { background-color: #c62828; } .bg-trauma { background-color: #1565c0; } .bg-ohca { background-color: #212121; } .bg-other { background-color: #2e7d32; } .bg-dai { background-color: #d32f2f; }
 
-        /* --- 後台管理樣式 --- */
-        .admin-scroll { padding: 15px; }
+        /* --- 頁面2：後台管理 --- */
+        #page-admin { padding: 15px; padding-bottom: 90px; } /* 留空間給底部導航 */
         .admin-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; font-size: 14px; margin-top: 10px;}
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; font-size: 14px; margin-top: 15px;}
         input[type="text"], textarea, select, input[type="file"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
-        textarea { height: 70px; }
+        textarea { height: 80px; }
         .submit-btn { background-color: var(--primary); color: white; padding: 12px; width: 100%; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px;}
         
-        .admin-tabs { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-        .tab-btn { flex: 1 1 30%; padding: 10px; border: none; background: #eee; border-radius: 8px; font-weight: bold; color: #555; cursor: pointer; font-size: 13px;}
+        .admin-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: #eee; border-radius: 8px; font-weight: bold; color: #555; cursor: pointer; font-size: 14px;}
         .tab-btn.active { background: var(--primary); color: white; }
         .admin-section { display: none; }
         .admin-section.active { display: block; }
 
-        /* 🔘 按鈕式 T2/TP/TPS 標籤 */
-        .level-toggles { display: flex; gap: 10px; margin-bottom: 10px; }
-        .lvl-btn { flex: 1; padding: 10px; border-radius: 8px; border: 2px solid #ccc; background: white; color: #888; font-weight: bold; text-align: center; cursor: pointer; transition: 0.2s; }
-        .lvl-btn[data-lvl="T2"].active { background: #999999; color: white; border-color: #999999; }
-        .lvl-btn[data-lvl="TP"].active { background: #d32f2f; color: white; border-color: #d32f2f; }
-        .lvl-btn[data-lvl="TPS"].active { background: #d32f2f; color: white; border-color: #d32f2f; }
+        /* 🔘 按鈕式 T2/TP/TPS 標籤 (沒點灰色，有點紅色) */
+        .level-toggles { display: flex; gap: 10px; margin-bottom: 5px; }
+        .lvl-btn { flex: 1; padding: 10px; border-radius: 8px; border: 2px solid #bbb; background: #e0e0e0; color: #666; font-weight: bold; text-align: center; cursor: pointer; transition: 0.2s; }
+        .lvl-btn.active { background: #d32f2f; color: white; border-color: #b71c1c; } /* 點擊後變為紅色 */
 
-        /* 修改列表樣式 */
         .edit-card { background: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .edit-btn { background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .user-card { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
+        .btn-grant { background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-revoke { background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
 
-        .bottom-nav { position: absolute; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 100; padding-bottom: calc(10px + env(safe-area-inset-bottom)); box-sizing: border-box;}
+        /* 底部導航 */
+        .bottom-nav { position: absolute; bottom: 0; left: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 100; padding-bottom: calc(10px + env(safe-area-inset-bottom)); flex: 0 0 auto;}
         .nav-item { text-align: center; color: #888; font-size: 12px; flex: 1; cursor: pointer; }
         .nav-item.active { color: var(--primary); font-weight: bold; }
         .nav-icon { font-size: 24px; display: block; margin-bottom: 3px; }
@@ -71,7 +76,7 @@
 </head>
 <body>
 
-<!-- 限制寬度的 App 容器 -->
+<!-- APP 主容器 -->
 <div class="app-container">
 
     <div class="app-header">🚑 EMS 藥物手冊</div>
@@ -93,7 +98,7 @@
     </div>
 
     <!-- 頁面 2：系統管理 -->
-    <div id="page-admin" class="page admin-scroll">
+    <div id="page-admin" class="page">
         <div class="admin-tabs">
             <button class="tab-btn active" onclick="switchAdminTab('meds')" id="tab-meds">➕ 新增</button>
             <button class="tab-btn" onclick="switchAdminTab('edit')" id="tab-edit">✏️ 修改</button>
@@ -118,11 +123,11 @@
                 <label>中文名稱</label>
                 <input type="text" id="name_zh" required>
                 
-                <label>適用層級 (點擊選擇)</label>
+                <label>適用層級 (點擊選擇，紅色為選中)</label>
                 <div class="level-toggles">
-                    <div class="lvl-btn active" data-lvl="T2" onclick="this.classList.toggle('active')">T2</div>
-                    <div class="lvl-btn active" data-lvl="TP" onclick="this.classList.toggle('active')">TP</div>
-                    <div class="lvl-btn active" data-lvl="TPS" onclick="this.classList.toggle('active')">TPS</div>
+                    <div class="lvl-btn" data-lvl="T2" onclick="this.classList.toggle('active')">T2</div>
+                    <div class="lvl-btn" data-lvl="TP" onclick="this.classList.toggle('active')">TP</div>
+                    <div class="lvl-btn" data-lvl="TPS" onclick="this.classList.toggle('active')">TPS</div>
                 </div>
 
                 <label>藥理機轉</label><input type="text" id="mechanism">
@@ -141,7 +146,7 @@
             </form>
         </div>
 
-        <!-- 區塊：選擇要修改的藥物 -->
+        <!-- 區塊：選擇修改 -->
         <div id="admin-edit" class="admin-section admin-box">
             <h3 style="margin-top:0; color:var(--primary);">✏️ 點擊要修改的藥物</h3>
             <div id="edit-list-container">載入中...</div>
@@ -258,7 +263,6 @@
         renderDrugList(category);
     }
 
-    // 載入編輯清單
     window.loadEditList = function() {
         const container = document.getElementById("edit-list-container");
         container.innerHTML = "";
@@ -271,7 +275,6 @@
         });
     }
 
-    // 填入欲修改的資料
     window.fillEditForm = function(data) {
         isEditing = true;
         editingOldImageUrl = data.imageUrl || "";
@@ -279,7 +282,7 @@
         document.getElementById("form-title").innerHTML = `✏️ 修改藥物：${data.name_en}`;
         document.getElementById("category").value = data.category || "其他";
         document.getElementById("name_en").value = data.name_en;
-        document.getElementById("name_en").readOnly = true; // 修改時不允許改英文名(作為ID)
+        document.getElementById("name_en").readOnly = true; 
         document.getElementById("name_en").style.backgroundColor = "#eee";
         document.getElementById("name_zh").value = data.name_zh || "";
         document.getElementById("mechanism").value = data.mechanism || "";
@@ -289,23 +292,20 @@
         document.getElementById("dosage").value = data.dosage || "";
         document.getElementById("precautions").value = data.precautions || "";
 
-        // 設定 T2/TP/TPS 按鈕狀態
         const levels = data.levels || "";
         document.querySelectorAll('.lvl-btn').forEach(btn => {
             if (levels.includes(btn.dataset.lvl)) btn.classList.add('active');
             else btn.classList.remove('active');
         });
 
-        // 圖片變為非必填
         document.getElementById("imageFile").required = false;
         document.getElementById("img-label").innerHTML = `📷 替換圖片 (選填)`;
         document.getElementById("edit-img-hint").style.display = "block";
         document.getElementById("cancelEditBtn").style.display = "block";
         
-        switchAdminTab('meds'); // 自動切換回表單頁
+        switchAdminTab('meds'); 
     }
 
-    // 取消修改，重置為新增模式
     window.resetFormToNew = function() {
         isEditing = false;
         document.getElementById("drugForm").reset();
@@ -316,10 +316,9 @@
         document.getElementById("img-label").innerHTML = `📷 圖片上傳 (必填)`;
         document.getElementById("edit-img-hint").style.display = "none";
         document.getElementById("cancelEditBtn").style.display = "none";
-        document.querySelectorAll('.lvl-btn').forEach(btn => btn.classList.add('active')); // 預設全選
+        document.querySelectorAll('.lvl-btn').forEach(btn => btn.classList.remove('active')); // 重置為灰色沒選狀態
     }
 
-    // 儲存資料 (新增/修改)
     document.getElementById("drugForm").addEventListener("submit", async (e) => {
         e.preventDefault();
         const btn = document.getElementById("uploadBtn");
@@ -327,34 +326,35 @@
 
         const nameEn = document.getElementById("name_en").value.trim();
         const file = document.getElementById("imageFile").files[0];
-        
-        // 收集選中的標籤 (T2 | TP | TPS)
         const activeLevels = Array.from(document.querySelectorAll('.lvl-btn.active')).map(b => b.dataset.lvl).join(" | ");
-
+        const categoryVal = document.getElementById("category").value;
+        
         try {
-            let finalImageUrl = editingOldImageUrl; // 預設用舊圖
-
-            if (file) { // 如果有選新圖，就上傳並蓋掉
+            let finalImageUrl = editingOldImageUrl; 
+            if (file) { 
                 const storageRef = ref(storage, `medications/${nameEn}_${file.name}`);
                 const snapshot = await uploadBytes(storageRef, file);
                 finalImageUrl = await getDownloadURL(snapshot.ref);
             }
 
             await setDoc(doc(db, "medications", nameEn), {
-                category: document.getElementById("category").value,
+                category: categoryVal,
                 name_en: nameEn, name_zh: document.getElementById("name_zh").value,
-                levels: activeLevels, // 寫入按鈕產生的字串
+                levels: activeLevels, 
                 mechanism: document.getElementById("mechanism").value,
                 indications: document.getElementById("indications").value, 
                 route: document.getElementById("route").value, dosage: document.getElementById("dosage").value,
                 contraindications: document.getElementById("contraindications").value, precautions: document.getElementById("precautions").value,
                 imageUrl: finalImageUrl 
-            }, { merge: true }); // 使用 merge 避免清掉舊資料
+            }, { merge: true }); 
 
             alert(`✅ [${nameEn}] 儲存成功！`);
             resetFormToNew();
             switchPage('list'); await loadDrugsFromFirebase();
             
+            document.querySelectorAll('.side-tab-btn').forEach(btn => {
+                if(btn.innerText === categoryVal) btn.click();
+            });
         } catch (error) { alert("❌ 錯誤：" + error.message); } 
         finally { btn.innerText = "💾 儲存資料"; btn.disabled = false; }
     });
@@ -364,7 +364,7 @@
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(`page-${pageName}`).classList.add('active');
         document.getElementById(`nav-${pageName}`).classList.add('active');
-        if (pageName === 'admin') document.getElementById('tab-meds').click(); 
+        if (pageName === 'admin') { document.getElementById('tab-meds').click(); resetFormToNew(); }
     };
     
     window.switchAdminTab = function(tabName) {
@@ -372,7 +372,7 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(`admin-${tabName}`).classList.add('active');
         document.getElementById(`tab-${tabName}`).classList.add('active');
-        if (tabName === 'edit') loadEditList(); // 點擊修改分頁時載入清單
+        if (tabName === 'edit') loadEditList(); 
         if (tabName === 'users') loadUsersManagement(); 
     };
 
