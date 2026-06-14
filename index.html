@@ -7,100 +7,138 @@
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         :root { --primary: #d32f2f; --bg: #f4f6f9; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg); margin: 0; padding: 0; padding-bottom: 70px; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg); margin: 0; padding: 0; padding-bottom: 70px; -webkit-tap-highlight-color: transparent; overflow: hidden;}
         
-        /* 頂部導航 */
         .app-header { background-color: var(--primary); color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         
-        /* 頁面切換機制 */
-        .page { display: none; padding: 15px; }
+        /* 頁面切換 */
+        .page { display: none; height: calc(100vh - 110px); }
         .page.active { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* 藥物清單樣式 */
-        .drug-card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 15px; }
-        .drug-card:active { transform: scale(0.98); }
-        .drug-img { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; background-color: #eee; }
+        /* ------------------------------------------- */
+        /* ✨ 活頁簿版面設計 (左邊內容，右邊標籤) */
+        /* ------------------------------------------- */
+        .binder-layout { display: flex; height: 100%; width: 100%; }
+        
+        /* 左側：藥物列表區 */
+        .content-area { flex: 1; overflow-y: auto; padding: 15px; padding-right: 5px; }
+        .drug-card { background: white; border-left: 5px solid var(--primary); border-radius: 8px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; transition: 0.1s; cursor: pointer; }
+        .drug-card:active { transform: scale(0.98); background-color: #f0f0f0; }
         .drug-info { flex: 1; }
         .drug-en { font-size: 18px; font-weight: bold; color: #333; margin: 0 0 4px 0; }
         .drug-zh { font-size: 14px; color: #777; margin: 0; }
-        .send-btn { background-color: #ffebee; color: var(--primary); border: none; padding: 10px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; }
+        .send-icon { color: var(--primary); font-size: 20px; font-weight: bold; background: #ffebee; padding: 8px 12px; border-radius: 20px; }
 
-        /* 後台表單與列表樣式 */
+        /* 右側：活頁標籤區 */
+        .side-tabs { width: 45px; display: flex; flex-direction: column; justify-content: flex-start; gap: 5px; padding-top: 10px; }
+        .side-tab-btn { flex: 1; max-height: 80px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 16px; border-radius: 12px 0 0 12px; opacity: 0.6; transition: 0.2s; cursor: pointer; box-shadow: -2px 2px 5px rgba(0,0,0,0.1); writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 2px;}
+        .side-tab-btn.active { opacity: 1; width: 55px; transform: translateX(-5px); font-size: 18px; }
+
+        /* 標籤顏色 (對應實體卡) */
+        .bg-heart { background-color: #c62828; border: 1px solid #b71c1c; }   /* 紅色-心臟 */
+        .bg-trauma { background-color: #1565c0; border: 1px solid #0d47a1; }  /* 藍色-創傷 */
+        .bg-ohca { background-color: #212121; border: 1px solid #000000; }    /* 黑色-OHCA */
+        .bg-other { background-color: #2e7d32; border: 1px solid #1b5e20; }   /* 綠色-其他 */
+        .bg-dai { background-color: #d32f2f; border: 1px solid #b71c1c; }     /* 紅色-DAI */
+
+        /* ------------------------------------------- */
+        /* 後台管理表單樣式 */
+        /* ------------------------------------------- */
+        .admin-scroll { height: 100%; overflow-y: auto; padding: 15px; }
         .admin-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; font-size: 14px; }
-        input[type="text"], textarea, input[type="file"] { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
-        .submit-btn { background-color: var(--primary); color: white; padding: 12px; width: 100%; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
-        
-        /* 管理員分頁標籤 */
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; font-size: 14px; margin-top: 10px;}
+        input[type="text"], textarea, select, input[type="file"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        textarea { height: 70px; }
+        .submit-btn { background-color: var(--primary); color: white; padding: 12px; width: 100%; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px;}
         .admin-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
         .tab-btn { flex: 1; padding: 10px; border: none; background: #eee; border-radius: 8px; font-weight: bold; color: #555; cursor: pointer; }
         .tab-btn.active { background: var(--primary); color: white; }
         .admin-section { display: none; }
         .admin-section.active { display: block; }
-
-        /* 使用者列表樣式 */
         .user-card { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
         .user-name { font-weight: bold; color: #333; font-size: 16px; margin: 0; }
         .user-id { font-size: 11px; color: #888; margin: 0; }
         .btn-grant { background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
         .btn-revoke { background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-
+        
         /* 底部導航 */
         .bottom-nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
         .nav-item { text-align: center; color: #888; font-size: 12px; flex: 1; cursor: pointer; }
         .nav-item.active { color: var(--primary); font-weight: bold; }
         .nav-icon { font-size: 24px; display: block; margin-bottom: 3px; }
-        #adminNav { display: none; } /* 預設隱藏 */
-        #loadingMsg { text-align: center; color: #888; margin-top: 50px; font-weight: bold; }
+        #adminNav { display: none; } 
+        #loadingMsg { text-align: center; color: #888; margin-top: 50px; font-weight: bold; width: 100%; }
     </style>
 </head>
 <body>
 
-    <div class="app-header">🚑 EMS 系統</div>
+    <div class="app-header">🚑 EMS 藥物手冊</div>
 
-    <!-- 頁面 1：藥物清單 -->
+    <!-- 頁面 1：藥物清單 (活頁簿介面) -->
     <div id="page-list" class="page active">
-        <div id="loadingMsg">🔄 系統初始化中...</div>
-        <div id="drug-list"></div>
+        <div class="binder-layout">
+            <!-- 左側列表 -->
+            <div class="content-area" id="drug-list">
+                <div id="loadingMsg">🔄 資料載入中...</div>
+            </div>
+            
+            <!-- 右側標籤 -->
+            <div class="side-tabs">
+                <div class="side-tab-btn bg-heart active" onclick="filterCategory('心臟', this)">心臟</div>
+                <div class="side-tab-btn bg-trauma" onclick="filterCategory('創傷', this)">創傷</div>
+                <div class="side-tab-btn bg-ohca" onclick="filterCategory('OHCA', this)">OHCA</div>
+                <div class="side-tab-btn bg-other" onclick="filterCategory('其他', this)">其他</div>
+                <div class="side-tab-btn bg-dai" onclick="filterCategory('DAI', this)">DAI</div>
+            </div>
+        </div>
     </div>
 
-    
     <!-- 頁面 2：管理後台 -->
-    <div id="page-admin" class="page">
+    <div id="page-admin" class="page admin-scroll">
         <div class="admin-tabs">
             <button class="tab-btn active" onclick="switchAdminTab('meds')" id="tab-meds">💊 新增藥物</button>
             <button class="tab-btn" onclick="switchAdminTab('users')" id="tab-users">👤 權限管理</button>
         </div>
 
-        <!-- 區塊 A: 新增藥物 -->
         <div id="admin-meds" class="admin-section active admin-box">
             <h3 style="margin-top:0; color:var(--primary);">新增/更新資料</h3>
             <form id="drugForm">
+                <label>📚 藥物分類 (右側標籤)</label>
+                <select id="category" required>
+                    <option value="心臟">心臟 (紅色)</option>
+                    <option value="創傷">創傷 (藍色)</option>
+                    <option value="OHCA">OHCA (黑色)</option>
+                    <option value="其他">其他 (綠色)</option>
+                    <option value="DAI">DAI (紅色)</option>
+                </select>
+
                 <label>英文名稱 (必填)</label><input type="text" id="name_en" required>
                 <label>中文名稱</label><input type="text" id="name_zh" required>
-                <label>適用層級</label><input type="text" id="levels" value="T2 | TP | TPS">
+                <label>適用層級 (用 | 分隔)</label><input type="text" id="levels" value="T2 | TP | TPS">
                 <label>藥理機轉</label><input type="text" id="mechanism">
-                <label>用藥方式</label><input type="text" id="route">
-                <label>劑量說明</label><textarea id="dosage"></textarea>
-                <label>禁忌症</label><textarea id="contraindications"></textarea>
-                <label>注意事項</label><textarea id="precautions"></textarea>
-                <label>📷 圖片上傳 (必填)</label><input type="file" id="imageFile" accept="image/*" required>
+                
+                <label>1. 評估使用時機</label><textarea id="indications"></textarea>
+                <label>2. 確認禁忌症</label><textarea id="contraindications"></textarea>
+                <label>3. 用藥方式 (如 靜脈推注)</label><input type="text" id="route">
+                <label>3-1. 劑量說明</label><textarea id="dosage"></textarea>
+                <label>4. 注意事項</label><textarea id="precautions"></textarea>
+                
+                <label>📷 圖片上傳 (必填，將顯示於 LINE 卡片中)</label>
+                <input type="file" id="imageFile" accept="image/*" required>
                 <button type="submit" class="submit-btn" id="uploadBtn">💾 儲存並上傳</button>
             </form>
         </div>
 
-        <!-- 區塊 B: 權限管理 -->
         <div id="admin-users" class="admin-section admin-box">
             <h3 style="margin-top:0; color:var(--primary);">管理員設定</h3>
-            <p style="font-size: 12px; color: #666;">系統會顯示所有曾與機器人互動的帳號。您可以點擊按鈕授予或取消管理權限。</p>
             <div id="user-list-container">載入人員名單中...</div>
         </div>
     </div>
 
     <!-- 底部導航 -->
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchPage('list')" id="nav-list"><span class="nav-icon">🏥</span>藥物清單</div>
+        <div class="nav-item active" onclick="switchPage('list')" id="nav-list"><span class="nav-icon">🏥</span>活頁目錄</div>
         <div class="nav-item" onclick="switchPage('admin')" id="adminNav"><span class="nav-icon">⚙️</span>系統管理</div>
     </div>
 
@@ -122,139 +160,109 @@
     const db = getFirestore(app);
     const storage = getStorage(app);
 
-    let currentUserId = "";
-    let currentUserName = "";
+    const SUPER_ADMIN = "Ua1354bdb72c75c5ba123935e29f2b435";
+    let currentUserId = ""; let currentUserName = "";
+    
+    // 儲存所有藥物資料的陣列，用來做分類切換
+    let allDrugsData = [];
 
     async function initLiff() {
         try {
-            await liff.init({ liffId: "2010390576-JZN69E3p" }); // 🔴 請填寫 LIFF ID
+            await liff.init({ liffId: "2010390576-JZN69E3p" }); 
             if (!liff.isLoggedIn()) { liff.login(); return; }
 
             const profile = await liff.getProfile();
-            currentUserId = profile.userId;
-            currentUserName = profile.displayName;
+            currentUserId = profile.userId; currentUserName = profile.displayName;
 
             await checkAndInitAdmin(currentUserId, currentUserName);
-            loadDrugs();
-
+            await loadDrugsFromFirebase();
         } catch (err) { alert("系統初始化失敗：" + err); }
     }
 
-    // 🟢 核心邏輯：檢查並初始化管理員
     async function checkAndInitAdmin(uid, name) {
-        const adminsRef = collection(db, "authorized_admins");
-        const snapshot = await getDocs(adminsRef);
-
-        if (snapshot.empty) {
-            // 如果資料庫完全沒有管理員，目前這個登入的人直接成為首位創始人
-            await setDoc(doc(db, "authorized_admins", uid), {
-                name: name,
-                role: "super_admin",
-                createdAt: new Date()
-            });
-            alert("🎉 系統初始化完成！您已被註冊為【首位系統管理員】。");
+        if (uid === SUPER_ADMIN) {
             document.getElementById("adminNav").style.display = "block";
-        } else {
-            // 檢查當前用戶是否在管理員名單中
-            const userAdminDoc = await getDoc(doc(db, "authorized_admins", uid));
-            if (userAdminDoc.exists()) {
-                document.getElementById("adminNav").style.display = "block"; // 顯示管理按鈕
-            }
+            await setDoc(doc(db, "authorized_admins", uid), { name: name, role: "super_admin" }, { merge: true });
+            return;
         }
+        const userAdminDoc = await getDoc(doc(db, "authorized_admins", uid));
+        if (userAdminDoc.exists()) document.getElementById("adminNav").style.display = "block";
     }
 
-    // 載入藥物清單 (前端)
-    async function loadDrugs() {
-        const listDiv = document.getElementById("drug-list");
-        listDiv.innerHTML = "";
+    // 從資料庫抓取所有藥物
+    async function loadDrugsFromFirebase() {
         try {
             const querySnapshot = await getDocs(collection(db, "medications"));
+            allDrugsData = [];
+            querySnapshot.forEach((doc) => {
+                allDrugsData.push(doc.data());
+            });
             document.getElementById("loadingMsg").style.display = "none";
             
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                const card = document.createElement("div");
-                card.className = "drug-card";
-                card.onclick = () => {
-                    liff.sendMessages([{ type: "text", text: `藥物查詢: ${data.name_en}` }]).then(()=>liff.closeWindow());
-                };
-                card.innerHTML = `
-                    <img src="${data.imageUrl || 'https://i.ibb.co/placeholder.png'}" class="drug-img">
-                    <div class="drug-info">
-                        <h3 class="drug-en">${data.name_en}</h3>
-                        <p class="drug-zh">${data.name_zh || ''}</p>
-                    </div>
-                    <button class="send-btn">呼叫</button>
-                `;
-                listDiv.appendChild(card);
-            });
-        } catch (error) { document.getElementById("loadingMsg").innerText = "載入失敗"; }
-    }
-
-    // 載入人員清單 (後台權限管理)
-    window.loadUsersManagement = async function() {
-        const container = document.getElementById("user-list-container");
-        container.innerHTML = "讀取中...";
-        try {
-            // 抓取所有曾在 LINE 互動過的用戶
-            const usersSnap = await getDocs(collection(db, "line_users"));
-            // 抓取目前的管理員名單
-            const adminsSnap = await getDocs(collection(db, "authorized_admins"));
-            const adminIds = adminsSnap.docs.map(d => d.id);
-
-            let html = "";
-            usersSnap.forEach(docSnap => {
-                const user = docSnap.data();
-                if(!user.userId) return; // 防呆
-                
-                const isAdmin = adminIds.includes(user.userId);
-                const isMe = (user.userId === currentUserId);
-                
-                // 防呆：不能拔除自己的管理權限，以免系統被鎖死
-                let btnHtml = "";
-                if (isAdmin) {
-                    if (isMe) btnHtml = `<span style="color:#d32f2f; font-size:12px; font-weight:bold;">您自己(管理員)</span>`;
-                    else btnHtml = `<button class="btn-revoke" onclick="toggleAdmin('${user.userId}', '${user.name || '未知'}', false)">撤銷權限</button>`;
-                } else {
-                    btnHtml = `<button class="btn-grant" onclick="toggleAdmin('${user.userId}', '${user.name || '未知'}', true)">設為管理員</button>`;
-                }
-
-                html += `
-                    <div class="user-card">
-                        <div>
-                            <p class="user-name">${user.name || "未知名稱"}</p>
-                            <p class="user-id">${user.userId.substring(0, 10)}...</p>
-                        </div>
-                        <div>${btnHtml}</div>
-                    </div>
-                `;
-            });
-            
-            if(html === "") html = "目前尚無其他人員名冊。請請弟兄們先在 LINE 對機器人隨意發送文字，系統就會自動將他們加入名冊。";
-            container.innerHTML = html;
-        } catch (e) {
-            container.innerHTML = "讀取人員失敗";
-            console.error(e);
+            // 預設顯示「心臟」分類
+            renderDrugList("心臟");
+        } catch (error) { 
+            document.getElementById("loadingMsg").innerText = "資料載入失敗，請檢查網路。"; 
         }
     }
 
-    // 授權/撤銷 執行函數
-    window.toggleAdmin = async function(targetUid, targetName, toGrant) {
-        if (!confirm(`確定要將 [${targetName}] ${toGrant ? '設為管理員' : '撤銷權限'} 嗎？`)) return;
+    // 渲染特定分類的藥物列表 (純文字目錄版)
+    window.renderDrugList = function(category) {
+        const listDiv = document.getElementById("drug-list");
+        listDiv.innerHTML = "";
         
-        try {
-            if (toGrant) {
-                await setDoc(doc(db, "authorized_admins", targetUid), { name: targetName, addedBy: currentUserName, timestamp: new Date() });
-                alert(`已授予 ${targetName} 管理權限！`);
-            } else {
-                await deleteDoc(doc(db, "authorized_admins", targetUid));
-                alert(`已撤銷 ${targetName} 的管理權限！`);
-            }
-            loadUsersManagement(); // 重新整理列表
-        } catch (e) { alert("設定失敗: " + e.message); }
+        // 過濾出屬於該分類的藥物 (如果舊資料沒有分類，預設歸類到"其他")
+        const filteredDrugs = allDrugsData.filter(d => (d.category || "其他") === category);
+
+        if (filteredDrugs.length === 0) {
+            listDiv.innerHTML = `<div style="text-align:center; color:#999; margin-top:50px;">此分類目前無資料</div>`;
+            return;
+        }
+
+        filteredDrugs.forEach((data) => {
+            const card = document.createElement("div");
+            card.className = "drug-card";
+            card.onclick = async () => {
+                try {
+                    if (!liff.isInClient()) { alert("⚠️ 請在 LINE 聊天室開啟網頁。"); return; }
+                    await liff.sendMessages([{ type: "text", text: `藥物查詢: ${data.name_en}` }]);
+                    liff.closeWindow();
+                } catch (e) { alert("發送失敗。"); }
+            };
+            
+            // 將邊框顏色換成對應的分類顏色
+            let borderColor = "#2e7d32";
+            if(category === "心臟") borderColor = "#c62828";
+            if(category === "創傷") borderColor = "#1565c0";
+            if(category === "OHCA") borderColor = "#212121";
+            if(category === "DAI") borderColor = "#d32f2f";
+            
+            card.style.borderLeft = `6px solid ${borderColor}`;
+
+            // 純文字列表結構 (沒有圖片)
+            card.innerHTML = `
+                <div class="drug-info">
+                    <h3 class="drug-en">${data.name_en}</h3>
+                    <p class="drug-zh">${data.name_zh || ''}</p>
+                </div>
+                <div class="send-icon">➤</div>
+            `;
+            listDiv.appendChild(card);
+        });
     }
 
-    // 處理新增藥物表單
+    // 右側標籤點擊切換功能
+    window.filterCategory = function(category, btnElement) {
+        // 移除所有標籤的 active 狀態
+        document.querySelectorAll('.side-tab-btn').forEach(btn => btn.classList.remove('active'));
+        // 幫點擊的標籤加上 active 狀態 (讓它凸出來)
+        btnElement.classList.add('active');
+        
+        // 重新渲染左邊列表
+        renderDrugList(category);
+    }
+
+    // 儲存表單資料 (新增分類欄位)
     document.getElementById("drugForm").addEventListener("submit", async (e) => {
         e.preventDefault();
         const btn = document.getElementById("uploadBtn");
@@ -262,6 +270,7 @@
 
         const nameEn = document.getElementById("name_en").value.trim();
         const file = document.getElementById("imageFile").files[0];
+        const categoryVal = document.getElementById("category").value; // 取得分類
         
         try {
             const storageRef = ref(storage, `medications/${nameEn}_${file.name}`);
@@ -269,26 +278,32 @@
             const imageUrl = await getDownloadURL(snapshot.ref);
 
             await setDoc(doc(db, "medications", nameEn), {
+                category: categoryVal, // 存入分類
                 name_en: nameEn, name_zh: document.getElementById("name_zh").value,
                 levels: document.getElementById("levels").value, mechanism: document.getElementById("mechanism").value,
+                indications: document.getElementById("indications").value, 
                 route: document.getElementById("route").value, dosage: document.getElementById("dosage").value,
                 contraindications: document.getElementById("contraindications").value, precautions: document.getElementById("precautions").value,
                 imageUrl: imageUrl 
             });
             alert(`✅ [${nameEn}] 新增成功！`);
             document.getElementById("drugForm").reset();
-            switchPage('list'); loadDrugs();
+            switchPage('list'); await loadDrugsFromFirebase();
+            
+            // 新增完自動切換到該分類標籤
+            document.querySelectorAll('.side-tab-btn').forEach(btn => {
+                if(btn.innerText === categoryVal) btn.click();
+            });
         } catch (error) { alert("❌ 錯誤：" + error.message); } 
         finally { btn.innerText = "💾 儲存並上傳"; btn.disabled = false; }
     });
 
-    // 介面切換邏輯
     window.switchPage = function(pageName) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(`page-${pageName}`).classList.add('active');
         document.getElementById(`nav-${pageName}`).classList.add('active');
-        if (pageName === 'admin') switchAdminTab('meds'); // 預設顯示藥物頁面
+        if (pageName === 'admin') document.getElementById('tab-meds').click(); 
     };
 
     window.switchAdminTab = function(tabName) {
@@ -296,8 +311,54 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(`admin-${tabName}`).classList.add('active');
         document.getElementById(`tab-${tabName}`).classList.add('active');
-        if (tabName === 'users') loadUsersManagement(); // 切到權限分頁時載入名單
+        if (tabName === 'users') loadUsersManagement(); 
     };
+
+    window.loadUsersManagement = async function() {
+        const container = document.getElementById("user-list-container");
+        container.innerHTML = "讀取中...";
+        try {
+            const usersSnap = await getDocs(collection(db, "line_users"));
+            const adminsSnap = await getDocs(collection(db, "authorized_admins"));
+            const adminIds = adminsSnap.docs.map(d => d.id);
+
+            let html = "";
+            usersSnap.forEach(docSnap => {
+                const user = docSnap.data();
+                if(!user.userId) return; 
+                
+                const isAdmin = adminIds.includes(user.userId);
+                const isMe = (user.userId === currentUserId);
+                const isSuperAdmin = (user.userId === SUPER_ADMIN);
+                
+                let btnHtml = "";
+                if (isAdmin) {
+                    if (isMe || isSuperAdmin) btnHtml = `<span style="color:#d32f2f; font-size:12px; font-weight:bold;">系統管理員</span>`;
+                    else btnHtml = `<button class="btn-revoke" onclick="toggleAdmin('${user.userId}', '${user.name || '未知'}', false)">撤銷權限</button>`;
+                } else {
+                    btnHtml = `<button class="btn-grant" onclick="toggleAdmin('${user.userId}', '${user.name || '未知'}', true)">設為管理</button>`;
+                }
+
+                html += `<div class="user-card"><div><p class="user-name">${user.name || "未知名稱"}</p><p class="user-id">${user.userId.substring(0, 10)}...</p></div><div>${btnHtml}</div></div>`;
+            });
+            if(html === "") html = "目前尚無其他人員名冊。";
+            container.innerHTML = html;
+        } catch (e) { container.innerHTML = "讀取人員失敗"; }
+    }
+
+    window.toggleAdmin = async function(targetUid, targetName, toGrant) {
+        if (!confirm(`確定要將 [${targetName}] ${toGrant ? '設為管理員' : '撤銷權限'} 嗎？`)) return;
+        try {
+            if (toGrant) {
+                await setDoc(doc(db, "authorized_admins", targetUid), { name: targetName, timestamp: new Date() });
+                alert(`已授予管理權限！`);
+            } else {
+                await deleteDoc(doc(db, "authorized_admins", targetUid));
+                alert(`已撤銷管理權限！`);
+            }
+            loadUsersManagement(); 
+        } catch (e) { alert("設定失敗: " + e.message); }
+    }
 
     window.onload = initLiff;
 </script>
