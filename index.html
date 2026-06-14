@@ -2,71 +2,303 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>藥物小卡</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>EMS 藥物系統</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; background-color: #f4f4f4;}
-        #message { margin-top: 20px; font-size: 18px; color: #333; }
-        .loader { border: 5px solid #f3f3f3; border-top: 5px solid #00B900; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        :root { --primary: #d32f2f; --bg: #f4f6f9; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg); margin: 0; padding: 0; padding-bottom: 70px; -webkit-tap-highlight-color: transparent; }
+        
+        /* 頂部導航 */
+        .app-header { background-color: var(--primary); color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        
+        /* 頁面切換機制 */
+        .page { display: none; padding: 15px; }
+        .page.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* 藥物清單樣式 */
+        .drug-card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 15px; }
+        .drug-card:active { transform: scale(0.98); }
+        .drug-img { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; background-color: #eee; }
+        .drug-info { flex: 1; }
+        .drug-en { font-size: 18px; font-weight: bold; color: #333; margin: 0 0 4px 0; }
+        .drug-zh { font-size: 14px; color: #777; margin: 0; }
+        .send-btn { background-color: #ffebee; color: var(--primary); border: none; padding: 10px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; }
+
+        /* 後台表單與列表樣式 */
+        .admin-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; font-size: 14px; }
+        input[type="text"], textarea, input[type="file"] { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        .submit-btn { background-color: var(--primary); color: white; padding: 12px; width: 100%; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        
+        /* 管理員分頁標籤 */
+        .admin-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: #eee; border-radius: 8px; font-weight: bold; color: #555; cursor: pointer; }
+        .tab-btn.active { background: var(--primary); color: white; }
+        .admin-section { display: none; }
+        .admin-section.active { display: block; }
+
+        /* 使用者列表樣式 */
+        .user-card { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
+        .user-name { font-weight: bold; color: #333; font-size: 16px; margin: 0; }
+        .user-id { font-size: 11px; color: #888; margin: 0; }
+        .btn-grant { background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-revoke { background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+        /* 底部導航 */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { text-align: center; color: #888; font-size: 12px; flex: 1; cursor: pointer; }
+        .nav-item.active { color: var(--primary); font-weight: bold; }
+        .nav-icon { font-size: 24px; display: block; margin-bottom: 3px; }
+        #adminNav { display: none; } /* 預設隱藏 */
+        #loadingMsg { text-align: center; color: #888; margin-top: 50px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="loader" id="loader"></div>
-    <div id="message">正在為您開啟藥物小卡...</div>
 
-    <!-- 1. 載入 LIFF SDK -->
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <div class="app-header">🚑 EMS 系統</div>
 
-    <!-- 2. 載入 Firebase SDK (使用瀏覽器專用的 CDN 連結) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+    <!-- 頁面 1：藥物清單 -->
+    <div id="page-list" class="page active">
+        <div id="loadingMsg">🔄 系統初始化中...</div>
+        <div id="drug-list"></div>
+    </div>
 
-        // 你的 Firebase 設定
-        const firebaseConfig = {
-            apiKey: "AIzaSyD9oJirgoJCTU7h-ODfSpfwC80E5fqze2A",
-            authDomain: "clawone-6445c.firebaseapp.com",
-            projectId: "clawone-6445c",
-            storageBucket: "clawone-6445c.firebasestorage.app",
-            messagingSenderId: "945236029933",
-            appId: "1:945236029933:web:f93ffb9e6f8b41aebd37e4",
-            measurementId: "G-JEB18KRCXS"
-        };
+    <!-- 頁面 2：管理後台 -->
+    <div id="page-admin" class="page">
+        <div class="admin-tabs">
+            <button class="tab-btn active" onclick="switchAdminTab('meds')" id="tab-meds">💊 新增藥物</button>
+            <button class="tab-btn" onclick="switchAdminTab('users')" id="tab-users">👤 權限管理</button>
+        </div>
 
-        // 初始化 Firebase
-        const app = initializeApp(firebaseConfig);
-        const storage = getStorage(app);
+        <!-- 區塊 A: 新增藥物 -->
+        <div id="admin-meds" class="admin-section active admin-box">
+            <h3 style="margin-top:0; color:var(--primary);">新增/更新資料</h3>
+            <form id="drugForm">
+                <label>英文名稱 (必填)</label><input type="text" id="name_en" required>
+                <label>中文名稱</label><input type="text" id="name_zh" required>
+                <label>適用層級</label><input type="text" id="levels" value="T2 | TP | TPS">
+                <label>藥理機轉</label><input type="text" id="mechanism">
+                <label>用藥方式</label><input type="text" id="route">
+                <label>劑量說明</label><textarea id="dosage"></textarea>
+                <label>禁忌症</label><textarea id="contraindications"></textarea>
+                <label>注意事項</label><textarea id="precautions"></textarea>
+                <label>📷 圖片上傳 (必填)</label><input type="file" id="imageFile" accept="image/*" required>
+                <button type="submit" class="submit-btn" id="uploadBtn">💾 儲存並上傳</button>
+            </form>
+        </div>
 
-        // 初始化 LIFF 
-        async function main() {
-            try {
-                // 使用你截圖中的 LIFF ID
-                await liff.init({ liffId: "2010309703-y5s1PA3N" });
-                
-                document.getElementById('message').innerText = "取得檔案中...";
+        <!-- 區塊 B: 權限管理 -->
+        <div id="admin-users" class="admin-section admin-box">
+            <h3 style="margin-top:0; color:var(--primary);">管理員設定</h3>
+            <p style="font-size: 12px; color: #666;">系統會顯示所有曾與機器人互動的帳號。您可以點擊按鈕授予或取消管理權限。</p>
+            <div id="user-list-container">載入人員名單中...</div>
+        </div>
+    </div>
 
-                // 👇👇👇 注意！請把 "your_file_name.pdf" 換成你實際在 Storage 裡面的 PDF 檔名 👇👇👇
-                const pdfPath = 'cards/your_file_name.pdf';
-                const pdfRef = ref(storage, pdfPath);
+    <!-- 底部導航 -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchPage('list')" id="nav-list"><span class="nav-icon">🏥</span>藥物清單</div>
+        <div class="nav-item" onclick="switchPage('admin')" id="adminNav"><span class="nav-icon">⚙️</span>系統管理</div>
+    </div>
 
-                // 取得 Firebase Storage 檔案的下載網址
-                const url = await getDownloadURL(pdfRef);
-                
-                document.getElementById('message').innerText = "開啟中...";
-                
-                // 將網頁轉向到 PDF 網址，LINE 會自動預覽
-                window.location.replace(url);
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-            } catch (error) {
-                console.error("發生錯誤:", error);
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('message').innerText = "讀取失敗：" + error.message;
+    const firebaseConfig = {
+      apiKey: "AIzaSyD9oJirgoJCTU7h-ODfSpfwC80E5fqze2A",
+      authDomain: "clawone-6445c.firebaseapp.com",
+      projectId: "clawone-6445c",
+      storageBucket: "clawone-6445c.firebasestorage.app",
+      messagingSenderId: "945236029933",
+      appId: "1:945236029933:web:f93ffb9e6f8b41aebd37e4"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    let currentUserId = "";
+    let currentUserName = "";
+
+    async function initLiff() {
+        try {
+            await liff.init({ liffId: "你的LIFF_ID填在這裡" }); // 🔴 請填寫 LIFF ID
+            if (!liff.isLoggedIn()) { liff.login(); return; }
+
+            const profile = await liff.getProfile();
+            currentUserId = profile.userId;
+            currentUserName = profile.displayName;
+
+            await checkAndInitAdmin(currentUserId, currentUserName);
+            loadDrugs();
+
+        } catch (err) { alert("系統初始化失敗：" + err); }
+    }
+
+    // 🟢 核心邏輯：檢查並初始化管理員
+    async function checkAndInitAdmin(uid, name) {
+        const adminsRef = collection(db, "authorized_admins");
+        const snapshot = await getDocs(adminsRef);
+
+        if (snapshot.empty) {
+            // 如果資料庫完全沒有管理員，目前這個登入的人直接成為首位創始人
+            await setDoc(doc(db, "authorized_admins", uid), {
+                name: name,
+                role: "super_admin",
+                createdAt: new Date()
+            });
+            alert("🎉 系統初始化完成！您已被註冊為【首位系統管理員】。");
+            document.getElementById("adminNav").style.display = "block";
+        } else {
+            // 檢查當前用戶是否在管理員名單中
+            const userAdminDoc = await getDoc(doc(db, "authorized_admins", uid));
+            if (userAdminDoc.exists()) {
+                document.getElementById("adminNav").style.display = "block"; // 顯示管理按鈕
             }
         }
+    }
 
-        // 執行
-        main();
-    </script>
+    // 載入藥物清單 (前端)
+    async function loadDrugs() {
+        const listDiv = document.getElementById("drug-list");
+        listDiv.innerHTML = "";
+        try {
+            const querySnapshot = await getDocs(collection(db, "medications"));
+            document.getElementById("loadingMsg").style.display = "none";
+            
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                const card = document.createElement("div");
+                card.className = "drug-card";
+                card.onclick = () => {
+                    liff.sendMessages([{ type: "text", text: `藥物查詢: ${data.name_en}` }]).then(()=>liff.closeWindow());
+                };
+                card.innerHTML = `
+                    <img src="${data.imageUrl || 'https://i.ibb.co/placeholder.png'}" class="drug-img">
+                    <div class="drug-info">
+                        <h3 class="drug-en">${data.name_en}</h3>
+                        <p class="drug-zh">${data.name_zh || ''}</p>
+                    </div>
+                    <button class="send-btn">呼叫</button>
+                `;
+                listDiv.appendChild(card);
+            });
+        } catch (error) { document.getElementById("loadingMsg").innerText = "載入失敗"; }
+    }
+
+    // 載入人員清單 (後台權限管理)
+    window.loadUsersManagement = async function() {
+        const container = document.getElementById("user-list-container");
+        container.innerHTML = "讀取中...";
+        try {
+            // 抓取所有曾在 LINE 互動過的用戶
+            const usersSnap = await getDocs(collection(db, "line_users"));
+            // 抓取目前的管理員名單
+            const adminsSnap = await getDocs(collection(db, "authorized_admins"));
+            const adminIds = adminsSnap.docs.map(d => d.id);
+
+            let html = "";
+            usersSnap.forEach(docSnap => {
+                const user = docSnap.data();
+                if(!user.userId) return; // 防呆
+                
+                const isAdmin = adminIds.includes(user.userId);
+                const isMe = (user.userId === currentUserId);
+                
+                // 防呆：不能拔除自己的管理權限，以免系統被鎖死
+                let btnHtml = "";
+                if (isAdmin) {
+                    if (isMe) btnHtml = `<span style="color:#d32f2f; font-size:12px; font-weight:bold;">您自己(管理員)</span>`;
+                    else btnHtml = `<button class="btn-revoke" onclick="toggleAdmin('${user.userId}', '${user.name || '未知'}', false)">撤銷權限</button>`;
+                } else {
+                    btnHtml = `<button class="btn-grant" onclick="toggleAdmin('${user.userId}', '${user.name || '未知'}', true)">設為管理員</button>`;
+                }
+
+                html += `
+                    <div class="user-card">
+                        <div>
+                            <p class="user-name">${user.name || "未知名稱"}</p>
+                            <p class="user-id">${user.userId.substring(0, 10)}...</p>
+                        </div>
+                        <div>${btnHtml}</div>
+                    </div>
+                `;
+            });
+            
+            if(html === "") html = "目前尚無其他人員名冊。請請弟兄們先在 LINE 對機器人隨意發送文字，系統就會自動將他們加入名冊。";
+            container.innerHTML = html;
+        } catch (e) {
+            container.innerHTML = "讀取人員失敗";
+            console.error(e);
+        }
+    }
+
+    // 授權/撤銷 執行函數
+    window.toggleAdmin = async function(targetUid, targetName, toGrant) {
+        if (!confirm(`確定要將 [${targetName}] ${toGrant ? '設為管理員' : '撤銷權限'} 嗎？`)) return;
+        
+        try {
+            if (toGrant) {
+                await setDoc(doc(db, "authorized_admins", targetUid), { name: targetName, addedBy: currentUserName, timestamp: new Date() });
+                alert(`已授予 ${targetName} 管理權限！`);
+            } else {
+                await deleteDoc(doc(db, "authorized_admins", targetUid));
+                alert(`已撤銷 ${targetName} 的管理權限！`);
+            }
+            loadUsersManagement(); // 重新整理列表
+        } catch (e) { alert("設定失敗: " + e.message); }
+    }
+
+    // 處理新增藥物表單
+    document.getElementById("drugForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById("uploadBtn");
+        btn.innerText = "🚀 處理中..."; btn.disabled = true;
+
+        const nameEn = document.getElementById("name_en").value.trim();
+        const file = document.getElementById("imageFile").files[0];
+        
+        try {
+            const storageRef = ref(storage, `medications/${nameEn}_${file.name}`);
+            const snapshot = await uploadBytes(storageRef, file);
+            const imageUrl = await getDownloadURL(snapshot.ref);
+
+            await setDoc(doc(db, "medications", nameEn), {
+                name_en: nameEn, name_zh: document.getElementById("name_zh").value,
+                levels: document.getElementById("levels").value, mechanism: document.getElementById("mechanism").value,
+                route: document.getElementById("route").value, dosage: document.getElementById("dosage").value,
+                contraindications: document.getElementById("contraindications").value, precautions: document.getElementById("precautions").value,
+                imageUrl: imageUrl 
+            });
+            alert(`✅ [${nameEn}] 新增成功！`);
+            document.getElementById("drugForm").reset();
+            switchPage('list'); loadDrugs();
+        } catch (error) { alert("❌ 錯誤：" + error.message); } 
+        finally { btn.innerText = "💾 儲存並上傳"; btn.disabled = false; }
+    });
+
+    // 介面切換邏輯
+    window.switchPage = function(pageName) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(`page-${pageName}`).classList.add('active');
+        document.getElementById(`nav-${pageName}`).classList.add('active');
+        if (pageName === 'admin') switchAdminTab('meds'); // 預設顯示藥物頁面
+    };
+
+    window.switchAdminTab = function(tabName) {
+        document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`admin-${tabName}`).classList.add('active');
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+        if (tabName === 'users') loadUsersManagement(); // 切到權限分頁時載入名單
+    };
+
+    window.onload = initLiff;
+</script>
 </body>
 </html>
