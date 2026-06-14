@@ -122,35 +122,33 @@
             display: flex;
             flex-direction: column;
             background: transparent;
-            /* sits flush with right edge, tabs overflow slightly */
             position: relative;
             z-index: 5;
         }
 
         .book-tab {
-            flex: 1;                      /* equal height — 5 tabs fill entire list height */
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            writing-mode: vertical-rl;    /* text rotates top→bottom */
+            writing-mode: vertical-rl;
             text-orientation: mixed;
             font-size: 13px;
             font-weight: 700;
             color: rgba(255,255,255,0.88);
             cursor: pointer;
-            border-radius: 8px 0 0 8px;  /* left-rounded, flush with right edge */
+            border-radius: 8px 0 0 8px;
             margin-bottom: 3px;
             transition: filter .15s, transform .15s;
             letter-spacing: 2px;
             -webkit-user-select: none; user-select: none;
-            /* subtle right-edge shadow to feel "raised" */
             box-shadow: -2px 0 6px rgba(0,0,0,0.18);
             position: relative;
         }
         .book-tab:last-child { margin-bottom: 0; }
         .book-tab:active { filter: brightness(1.12); transform: scaleX(0.95); }
 
-        /* Active tab: slide left a bit + slightly wider — "selected page" effect */
+        /* Active tab: slide left a bit + slightly wider */
         .book-tab.active {
             transform: translateX(-4px);
             box-shadow: -4px 0 12px rgba(0,0,0,0.25);
@@ -163,16 +161,6 @@
         .book-tab.ohca   { background: var(--c-ohca); }
         .book-tab.other  { background: var(--c-other); }
         .book-tab.dai    { background: var(--c-dai); }
-
-        /* Active indicator dot */
-        .book-tab.active::before {
-            content: '';
-            position: absolute;
-            left: 6px;
-            width: 5px; height: 5px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.9);
-        }
 
         /* ── Drug list cards ── */
         .section-list {
@@ -367,8 +355,9 @@
                     <div class="form-card">
                         <div class="form-card-hdr">藥理資料</div>
                         <div class="form-row"><label>藥理機轉</label><input type="text" id="mechanism" placeholder="簡述作用機制"></div>
-                        <div class="form-row"><label>1. 評估使用時機</label><textarea id="indications" placeholder="適應症說明"></textarea></div>
-                        <div class="form-row"><label>2. 確認禁忌症</label><textarea id="contraindications" placeholder="禁忌症說明"></textarea></div>
+                        <div class="form-row"><label>1. 確認禁忌症</label><textarea id="contraindications" placeholder="禁忌症說明"></textarea></div>
+                        <div class="form-row"><label>1-1. 禁忌症補充說明（選填）</label><input type="text" id="ampoule_info" placeholder="例如：1Amp=1mg"></div>
+                        <div class="form-row"><label>2. 評估使用時機</label><textarea id="indications" placeholder="適應症說明"></textarea></div>
                         <div class="form-row"><label>3. 用藥方式</label><input type="text" id="route" placeholder="例如：靜脈推注"></div>
                         <div class="form-row"><label>3-1. 劑量說明</label><textarea id="dosage" placeholder="劑量與頻次"></textarea></div>
                         <div class="form-row"><label>4. 注意事項</label><textarea id="precautions" placeholder="特別提醒事項"></textarea></div>
@@ -589,8 +578,9 @@
         ni.value = data.name_en; ni.readOnly = true; ni.style.color = "var(--label2)";
         document.getElementById("name_zh").value           = data.name_zh || "";
         document.getElementById("mechanism").value         = data.mechanism || "";
-        document.getElementById("indications").value       = data.indications || "";
         document.getElementById("contraindications").value = data.contraindications || "";
+        document.getElementById("ampoule_info").value      = data.ampoule_info || "";
+        document.getElementById("indications").value       = data.indications || "";
         document.getElementById("route").value             = data.route || "";
         document.getElementById("dosage").value            = data.dosage || "";
         document.getElementById("precautions").value       = data.precautions || "";
@@ -635,8 +625,9 @@
                 category: catVal, name_en: nameEn,
                 name_zh:  document.getElementById("name_zh").value, levels,
                 mechanism:         document.getElementById("mechanism").value,
-                indications:       document.getElementById("indications").value,
                 contraindications: document.getElementById("contraindications").value,
+                ampoule_info:      document.getElementById("ampoule_info").value,
+                indications:       document.getElementById("indications").value,
                 route:             document.getElementById("route").value,
                 dosage:            document.getElementById("dosage").value,
                 precautions:       document.getElementById("precautions").value,
