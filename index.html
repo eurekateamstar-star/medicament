@@ -6,33 +6,34 @@
     <title>EMS 藥物手冊</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        /* ── Design Tokens ─────────────────────────────── */
+        /* ── Design Tokens ── */
         :root {
-            --red:        #C62828;
-            --red-dark:   #8B0000;
-            --red-soft:   rgba(198,40,40,0.08);
+            --red:       #C62828;
+            --red-dark:  #8B0000;
 
-            --c-heart:    #D32F2F;
-            --c-trauma:   #1565C0;
-            --c-ohca:     #212121;
-            --c-other:    #2E7D32;
-            --c-dai:      #E64A19;
+            --c-heart:   #D32F2F;
+            --c-trauma:  #1565C0;
+            --c-ohca:    #1A1A2E;
+            --c-other:   #1B5E20;
+            --c-dai:     #E64A19;
 
-            --bg:         #F2F2F7;       /* iOS system grouped background */
-            --surface:    #FFFFFF;
-            --surface2:   #F9F9FB;
-            --separator:  rgba(0,0,0,0.10);
-            --fill-q:     rgba(116,116,128,0.12); /* iOS quaternary fill */
+            --bg:        #F2F2F7;
+            --surface:   #FFFFFF;
+            --surface2:  #F9F9FB;
+            --sep:       rgba(0,0,0,0.10);
+            --fill-q:    rgba(116,116,128,0.12);
 
-            --label:      #000000;
-            --label2:     rgba(60,60,67,0.60);
-            --label3:     rgba(60,60,67,0.30);
+            --label:     #000000;
+            --label2:    rgba(60,60,67,0.60);
+            --label3:    rgba(60,60,67,0.30);
 
-            --safe-top:   env(safe-area-inset-top, 0px);
-            --safe-bot:   env(safe-area-inset-bottom, 0px);
+            --safe-top:  env(safe-area-inset-top,  0px);
+            --safe-bot:  env(safe-area-inset-bottom, 0px);
+
+            /* Book tab width */
+            --tab-w: 32px;
         }
 
-        /* ── Reset ─────────────────────────────────────── */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html, body {
             height: 100%; width: 100%;
@@ -43,7 +44,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* ── App Shell ─────────────────────────────────── */
+        /* ── App Shell ── */
         .app {
             width: 100%;
             max-width: 430px;
@@ -56,114 +57,120 @@
             position: relative;
         }
 
-        /* ── Navigation Bar ────────────────────────────── */
+        /* ── Nav Bar ── */
         .nav-bar {
             flex: 0 0 auto;
-            background: var(--red-dark);
-            /* Subtle gradient to break flatness */
             background: linear-gradient(180deg, #9B1C1C 0%, var(--red) 100%);
             padding-top: calc(var(--safe-top) + 14px);
             padding-bottom: 14px;
             padding-left: 16px;
-            padding-right: 16px;
+            padding-right: calc(var(--tab-w) + 16px); /* offset for book tabs */
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            /* Hair-line bottom border instead of box-shadow */
             border-bottom: 0.5px solid rgba(0,0,0,0.25);
+            z-index: 10;
         }
-        .nav-bar .nav-title {
-            font-size: 17px;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-            color: #FFFFFF;
-        }
-        .nav-bar .nav-badge {
-            position: absolute;
-            left: 16px;
-            font-size: 20px;
-            line-height: 1;
-        }
+        .nav-title  { font-size: 17px; font-weight: 600; letter-spacing: 0.3px; color: #fff; }
+        .nav-badge  { position: absolute; left: 16px; font-size: 20px; line-height: 1; }
 
-        /* ── Pages ─────────────────────────────────────── */
-        .page { display: none; flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
-        .page.active { display: flex; flex-direction: column; animation: fade-up 0.22s ease-out both; }
-        @keyframes fade-up { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+        /* ── Pages ── */
+        .page { display: none; flex: 1 1 auto; overflow: hidden; position: relative; }
+        .page.active { display: flex; animation: fade-up .22s ease-out both; }
+        @keyframes fade-up { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
 
-        /* ── Category Scroll (SF Symbols style pills) ─── */
-        .cat-scroll {
-            flex: 0 0 auto;
-            background: var(--surface);
-            border-bottom: 0.5px solid var(--separator);
-            overflow-x: auto;
-            overflow-y: hidden;
-            white-space: nowrap;
-            display: flex;
-            gap: 0;
-            padding: 0;
-            scrollbar-width: none;
-            -webkit-overflow-scrolling: touch;
-        }
-        .cat-scroll::-webkit-scrollbar { display: none; }
+        /* ── LIST PAGE layout: scroll area + right book tabs ── */
+        #page-list { flex-direction: row; }
 
-        .cat-tab {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 12px 20px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--label2);
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            white-space: nowrap;
-            flex-shrink: 0;
-            transition: color 0.15s, border-color 0.15s;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        .cat-tab.active          { color: var(--c-other); border-bottom-color: var(--c-other); }
-        .cat-tab.active.heart    { color: var(--c-heart); border-bottom-color: var(--c-heart); }
-        .cat-tab.active.trauma   { color: var(--c-trauma); border-bottom-color: var(--c-trauma); }
-        .cat-tab.active.ohca     { color: var(--c-ohca); border-bottom-color: var(--c-ohca); }
-        .cat-tab.active.other    { color: var(--c-other); border-bottom-color: var(--c-other); }
-        .cat-tab.active.dai      { color: var(--c-dai); border-bottom-color: var(--c-dai); }
-
-        /* ── Drug List ─────────────────────────────────── */
-        .list-body {
+        /* Main scrollable area — shrink to leave room for tabs */
+        .list-scroll {
             flex: 1 1 auto;
             overflow-y: auto;
             overflow-x: hidden;
-            padding: 16px 16px calc(var(--safe-bot) + 74px);
             -webkit-overflow-scrolling: touch;
+            padding: 16px 12px calc(var(--safe-bot) + 74px) 16px;
         }
 
-        /* iOS inset grouped section */
+        /* ── Right-side Book Tabs ── */
+        .book-tabs {
+            flex: 0 0 var(--tab-w);
+            display: flex;
+            flex-direction: column;
+            background: transparent;
+            /* sits flush with right edge, tabs overflow slightly */
+            position: relative;
+            z-index: 5;
+        }
+
+        .book-tab {
+            flex: 1;                      /* equal height — 5 tabs fill entire list height */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            writing-mode: vertical-rl;    /* text rotates top→bottom */
+            text-orientation: mixed;
+            font-size: 13px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.88);
+            cursor: pointer;
+            border-radius: 8px 0 0 8px;  /* left-rounded, flush with right edge */
+            margin-bottom: 3px;
+            transition: filter .15s, transform .15s;
+            letter-spacing: 2px;
+            -webkit-user-select: none; user-select: none;
+            /* subtle right-edge shadow to feel "raised" */
+            box-shadow: -2px 0 6px rgba(0,0,0,0.18);
+            position: relative;
+        }
+        .book-tab:last-child { margin-bottom: 0; }
+        .book-tab:active { filter: brightness(1.12); transform: scaleX(0.95); }
+
+        /* Active tab: slide left a bit + slightly wider — "selected page" effect */
+        .book-tab.active {
+            transform: translateX(-4px);
+            box-shadow: -4px 0 12px rgba(0,0,0,0.25);
+            filter: brightness(1.08);
+        }
+
+        /* Per-category colours */
+        .book-tab.heart  { background: var(--c-heart); }
+        .book-tab.trauma { background: var(--c-trauma); }
+        .book-tab.ohca   { background: var(--c-ohca); }
+        .book-tab.other  { background: var(--c-other); }
+        .book-tab.dai    { background: var(--c-dai); }
+
+        /* Active indicator dot */
+        .book-tab.active::before {
+            content: '';
+            position: absolute;
+            left: 6px;
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.9);
+        }
+
+        /* ── Drug list cards ── */
         .section-list {
             background: var(--surface);
             border-radius: 12px;
             overflow: hidden;
-            border: 0.5px solid var(--separator);
+            border: 0.5px solid var(--sep);
         }
-
         .drug-row {
             display: flex;
             align-items: center;
-            padding: 14px 16px;
+            padding: 14px 14px;
             cursor: pointer;
             position: relative;
-            transition: background 0.12s;
-            -webkit-tap-highlight-color: transparent;
+            transition: background .12s;
         }
         .drug-row:not(:last-child)::after {
             content: '';
             position: absolute;
-            bottom: 0;
-            left: 16px;
-            right: 0;
+            bottom: 0; left: 16px; right: 0;
             height: 0.5px;
-            background: var(--separator);
+            background: var(--sep);
         }
         .drug-row:active { background: var(--fill-q); }
 
@@ -172,7 +179,8 @@
             border-radius: 2px;
             align-self: stretch;
             flex-shrink: 0;
-            margin-right: 14px;
+            margin-right: 12px;
+            min-height: 32px;
         }
         .drug-accent.heart  { background: var(--c-heart); }
         .drug-accent.trauma { background: var(--c-trauma); }
@@ -181,42 +189,23 @@
         .drug-accent.dai    { background: var(--c-dai); }
 
         .drug-text { flex: 1; min-width: 0; }
-        .drug-en { font-size: 16px; font-weight: 600; color: var(--label); letter-spacing: 0.1px; }
-        .drug-zh { font-size: 13px; color: var(--label2); margin-top: 2px; }
+        .drug-en   { font-size: 16px; font-weight: 600; color: var(--label); }
+        .drug-zh   { font-size: 13px; color: var(--label2); margin-top: 2px; }
+        .drug-chev { font-size: 14px; color: var(--label3); flex-shrink: 0; margin-left: 6px; }
 
-        .drug-chevron {
-            font-size: 13px;
-            color: var(--label3);
-            flex-shrink: 0;
-            margin-left: 8px;
-        }
-
-        /* Loading / Empty state */
-        .state-msg {
-            text-align: center;
-            padding: 80px 20px;
-            color: var(--label2);
-            font-size: 15px;
-            font-weight: 500;
-        }
-        .loader {
-            width: 28px; height: 28px;
-            border: 2.5px solid var(--fill-q);
-            border-top-color: var(--red);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 14px;
-        }
+        /* state messages */
+        .state-msg { text-align: center; padding: 80px 20px; color: var(--label2); font-size: 15px; font-weight: 500; }
+        .loader { width: 28px; height: 28px; border: 2.5px solid var(--fill-q); border-top-color: var(--red); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 14px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ── Tab Bar ───────────────────────────────────── */
+        /* ── Tab Bar (bottom) ── */
         .tab-bar {
             position: absolute;
             bottom: 0; left: 0; right: 0;
             background: rgba(249,249,251,0.92);
             backdrop-filter: saturate(180%) blur(20px);
             -webkit-backdrop-filter: saturate(180%) blur(20px);
-            border-top: 0.5px solid var(--separator);
+            border-top: 0.5px solid var(--sep);
             display: flex;
             padding-bottom: var(--safe-bot);
             z-index: 100;
@@ -232,21 +221,16 @@
             color: var(--label3);
             font-size: 10px;
             font-weight: 500;
-            transition: color 0.15s;
+            transition: color .15s;
             -webkit-user-select: none; user-select: none;
         }
         .tab-item.active { color: var(--red); }
-        .tab-icon {
-            font-size: 22px;
-            line-height: 1;
-            margin-bottom: 3px;
-            transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1);
-        }
+        .tab-icon { font-size: 22px; line-height: 1; margin-bottom: 3px; transition: transform .2s cubic-bezier(.34,1.56,.64,1); }
         .tab-item.active .tab-icon { transform: translateY(-1px) scale(1.05); }
         #tab-admin { display: none; }
 
-        /* ── Admin Page ─────────────────────────────────── */
-        #page-admin { background: var(--bg); }
+        /* ── Admin Page ── */
+        #page-admin { flex-direction: column; background: var(--bg); }
         .admin-body {
             flex: 1 1 auto;
             overflow-y: auto;
@@ -254,206 +238,65 @@
             padding: 16px 16px calc(var(--safe-bot) + 74px);
             -webkit-overflow-scrolling: touch;
         }
+        .seg-ctrl { display: flex; background: var(--fill-q); border-radius: 10px; padding: 2px; margin-bottom: 20px; }
+        .seg-btn { flex: 1; padding: 8px 0; border: none; background: transparent; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--label2); cursor: pointer; transition: all .18s; white-space: nowrap; }
+        .seg-btn.active { background: var(--surface); color: var(--label); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
 
-        /* Segmented control */
-        .seg-ctrl {
-            display: flex;
-            background: var(--fill-q);
-            border-radius: 10px;
-            padding: 2px;
-            margin-bottom: 20px;
-            flex-shrink: 0;
-        }
-        .seg-btn {
-            flex: 1;
-            padding: 8px 0;
-            border: none;
-            background: transparent;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--label2);
-            cursor: pointer;
-            transition: all 0.18s;
-            white-space: nowrap;
-        }
-        .seg-btn.active {
-            background: var(--surface);
-            color: var(--label);
-            box-shadow: 0 1px 4px rgba(0,0,0,0.12);
-        }
-
-        /* Admin sections */
         .admin-section { display: none; }
-        .admin-section.active { display: block; animation: fade-up 0.2s ease-out; }
+        .admin-section.active { display: block; animation: fade-up .2s ease-out; }
 
-        /* Form card */
-        .form-card {
-            background: var(--surface);
-            border-radius: 12px;
-            border: 0.5px solid var(--separator);
-            overflow: hidden;
-            margin-bottom: 16px;
-        }
-        .form-card-header {
-            padding: 14px 16px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--label2);
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            border-bottom: 0.5px solid var(--separator);
-            background: var(--surface2);
-        }
-        .form-row {
-            padding: 0 16px;
-            border-bottom: 0.5px solid var(--separator);
-        }
+        .form-card { background: var(--surface); border-radius: 12px; border: 0.5px solid var(--sep); overflow: hidden; margin-bottom: 16px; }
+        .form-card-hdr { padding: 12px 16px; font-size: 12px; font-weight: 600; color: var(--label2); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 0.5px solid var(--sep); background: var(--surface2); }
+        .form-row { padding: 0 16px; border-bottom: 0.5px solid var(--sep); }
         .form-row:last-child { border-bottom: none; }
-        .form-row label {
-            display: block;
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--label2);
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            padding-top: 12px;
-            margin-bottom: 4px;
-        }
-        .form-row input,
-        .form-row textarea,
-        .form-row select {
-            width: 100%;
-            border: none;
-            outline: none;
-            font-size: 16px;
-            color: var(--label);
-            background: transparent;
-            font-family: inherit;
-            padding: 4px 0 12px;
-            resize: none;
-            -webkit-appearance: none;
-            appearance: none;
-        }
-        .form-row select { color: var(--label); }
-        .form-row textarea { height: 80px; }
+        .form-row label { display: block; font-size: 11px; font-weight: 600; color: var(--label2); text-transform: uppercase; letter-spacing: 0.4px; padding-top: 11px; margin-bottom: 3px; }
+        .form-row input, .form-row textarea, .form-row select { width: 100%; border: none; outline: none; font-size: 16px; color: var(--label); background: transparent; font-family: inherit; padding: 4px 0 11px; resize: none; -webkit-appearance: none; }
+        .form-row textarea { height: 76px; }
 
-        /* Level toggles */
-        .lvl-row {
-            display: flex;
-            gap: 8px;
-            padding: 12px 16px;
-        }
-        .lvl-chip {
-            flex: 1;
-            padding: 8px 0;
-            border-radius: 8px;
-            border: 1.5px solid var(--separator);
-            background: var(--surface2);
-            color: var(--label2);
-            font-weight: 700;
-            font-size: 14px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-        .lvl-chip.active {
-            background: var(--label);
-            color: var(--surface);
-            border-color: var(--label);
-        }
+        .lvl-row { display: flex; gap: 8px; padding: 12px 16px; }
+        .lvl-chip { flex: 1; padding: 8px 0; border-radius: 8px; border: 1.5px solid var(--sep); background: var(--surface2); color: var(--label2); font-weight: 700; font-size: 14px; text-align: center; cursor: pointer; transition: all .15s; }
+        .lvl-chip.active { background: var(--label); color: var(--surface); border-color: var(--label); }
 
-        /* Primary button */
-        .btn-primary {
-            width: 100%;
-            padding: 16px;
-            background: var(--red);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 8px;
-            transition: opacity 0.15s;
-        }
-        .btn-primary:active { opacity: 0.75; }
-        .btn-primary.secondary {
-            background: var(--fill-q);
-            color: var(--label2);
-            margin-top: 8px;
-        }
-        .btn-primary:disabled { opacity: 0.45; }
+        .btn-primary { width: 100%; padding: 16px; background: var(--red); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; transition: opacity .15s; }
+        .btn-primary:active { opacity: .75; }
+        .btn-primary.sec { background: var(--fill-q); color: var(--label2); }
+        .btn-primary:disabled { opacity: .45; }
 
-        /* Edit list & user list */
-        .row-item {
-            display: flex;
-            align-items: center;
-            padding: 13px 16px;
-            position: relative;
-        }
-        .row-item:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 16px; right: 0;
-            height: 0.5px;
-            background: var(--separator);
-        }
+        .row-item { display: flex; align-items: center; padding: 13px 16px; position: relative; }
+        .row-item:not(:last-child)::after { content:''; position:absolute; bottom:0; left:16px; right:0; height:0.5px; background:var(--sep); }
         .row-item-text { flex: 1; min-width: 0; }
         .row-item-title { font-size: 16px; font-weight: 500; color: var(--label); }
-        .row-item-sub { font-size: 13px; color: var(--label2); margin-top: 2px; }
+        .row-item-sub   { font-size: 13px; color: var(--label2); margin-top: 2px; }
 
-        .chip-btn {
-            flex-shrink: 0;
-            padding: 6px 14px;
-            border-radius: 20px;
-            border: none;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: opacity 0.15s;
-        }
-        .chip-btn:active { opacity: 0.7; }
-        .chip-edit    { background: var(--fill-q); color: var(--label); }
-        .chip-grant   { background: #E8F5E9; color: var(--c-other); }
-        .chip-revoke  { background: #FFEBEE; color: var(--c-heart); }
-        .badge-admin  { font-size: 12px; font-weight: 600; color: var(--c-other); }
+        .chip-btn { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; }
+        .chip-edit   { background: var(--fill-q); color: var(--label); }
+        .chip-grant  { background: #E8F5E9; color: var(--c-other); }
+        .chip-revoke { background: #FFEBEE; color: var(--c-heart); }
+        .badge-admin { font-size: 12px; font-weight: 600; color: var(--c-other); }
 
         /* Toast */
         #toast {
             position: absolute;
-            top: -80px;
-            left: 50%;
+            top: -80px; left: 50%;
             transform: translateX(-50%);
-            background: rgba(30,30,30,0.92);
+            background: rgba(30,30,30,.92);
             backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
             color: white;
             padding: 12px 22px;
             border-radius: 22px;
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 14px; font-weight: 600;
             white-space: nowrap;
             max-width: calc(100% - 32px);
             z-index: 9999;
-            transition: top 0.38s cubic-bezier(0.34,1.56,0.64,1);
+            transition: top .38s cubic-bezier(.34,1.56,.64,1);
             pointer-events: none;
         }
         #toast.show { top: calc(var(--safe-top) + 60px); }
-
-        /* File input */
-        .file-hint {
-            font-size: 12px;
-            color: var(--label2);
-            padding: 0 0 12px;
-        }
     </style>
 </head>
 <body>
 <div class="app">
 
-    <!-- Toast -->
     <div id="toast"></div>
 
     <!-- Nav Bar -->
@@ -462,49 +305,48 @@
         <span class="nav-title">EMS 藥物手冊</span>
     </div>
 
-    <!-- ── PAGE: LIST ──────────────────────────────── -->
+    <!-- ── PAGE: LIST ── -->
     <div id="page-list" class="page active">
-        <!-- Category Tabs -->
-        <div class="cat-scroll" id="cat-scroll">
-            <div class="cat-tab heart active" data-cat="心臟" data-color="heart" onclick="filterCategory('心臟', this, 'heart')">心臟</div>
-            <div class="cat-tab" data-cat="創傷" data-color="trauma" onclick="filterCategory('創傷', this, 'trauma')">創傷</div>
-            <div class="cat-tab" data-cat="OHCA" data-color="ohca" onclick="filterCategory('OHCA', this, 'ohca')">OHCA</div>
-            <div class="cat-tab" data-cat="其他" data-color="other" onclick="filterCategory('其他', this, 'other')">其他</div>
-            <div class="cat-tab" data-cat="DAI" data-color="dai" onclick="filterCategory('DAI', this, 'dai')">DAI</div>
-        </div>
 
-        <!-- Drug List -->
-        <div class="list-body">
+        <!-- Scrollable drug list -->
+        <div class="list-scroll">
             <div id="drug-list">
                 <div class="state-msg"><div class="loader"></div>資料載入中…</div>
             </div>
         </div>
+
+        <!-- Right-side book tabs (like physical handbook) -->
+        <div class="book-tabs">
+            <div class="book-tab heart active" data-cat="心臟" data-color="heart" onclick="filterCategory('心臟',this,'heart')">心臟</div>
+            <div class="book-tab trauma"        data-cat="創傷" data-color="trauma" onclick="filterCategory('創傷',this,'trauma')">創傷</div>
+            <div class="book-tab ohca"          data-cat="OHCA" data-color="ohca"  onclick="filterCategory('OHCA',this,'ohca')">OHCA</div>
+            <div class="book-tab other"         data-cat="其他" data-color="other" onclick="filterCategory('其他',this,'other')">其他</div>
+            <div class="book-tab dai"           data-cat="DAI"  data-color="dai"   onclick="filterCategory('DAI',this,'dai')">DAI</div>
+        </div>
     </div>
 
-    <!-- ── PAGE: ADMIN ─────────────────────────────── -->
+    <!-- ── PAGE: ADMIN ── -->
     <div id="page-admin" class="page">
         <div class="admin-body">
-            <!-- Segmented Control -->
             <div class="seg-ctrl">
-                <button class="seg-btn active" id="tab-meds" onclick="switchAdminTab('meds')">新增</button>
-                <button class="seg-btn" id="tab-edit" onclick="switchAdminTab('edit')">修改</button>
-                <button class="seg-btn" id="tab-users" onclick="switchAdminTab('users')">權限</button>
+                <button class="seg-btn active" id="tab-meds"  onclick="switchAdminTab('meds')">新增</button>
+                <button class="seg-btn"        id="tab-edit"  onclick="switchAdminTab('edit')">修改</button>
+                <button class="seg-btn"        id="tab-users" onclick="switchAdminTab('users')">權限</button>
             </div>
 
-            <!-- Section: New/Edit Drug -->
+            <!-- Add/Edit form -->
             <div id="admin-meds" class="admin-section active">
-                <h3 id="form-title" style="font-size:20px; font-weight:700; color:var(--label); margin-bottom:16px;">新增藥物</h3>
+                <h3 id="form-title" style="font-size:20px;font-weight:700;color:var(--label);margin-bottom:16px;">新增藥物</h3>
                 <form id="drugForm">
-
                     <div class="form-card">
-                        <div class="form-card-header">基本資料</div>
+                        <div class="form-card-hdr">基本資料</div>
                         <div class="form-row">
                             <label>藥物分類</label>
                             <select id="category" required>
                                 <option value="心臟">心臟（心血管系統）</option>
-                                <option value="創傷">創傷（止痛 / 止血等）</option>
+                                <option value="創傷">創傷（止痛 / 止血）</option>
                                 <option value="OHCA">OHCA（急救復甦）</option>
-                                <option value="其他">其他（代謝 / 呼吸等）</option>
+                                <option value="其他">其他（代謝 / 呼吸）</option>
                                 <option value="DAI">DAI（插管輔助）</option>
                             </select>
                         </div>
@@ -519,87 +361,63 @@
                     </div>
 
                     <div class="form-card">
-                        <div class="form-card-header">適用層級</div>
+                        <div class="form-card-hdr">適用層級</div>
                         <div class="lvl-row">
-                            <div class="lvl-chip" data-lvl="T2" onclick="this.classList.toggle('active')">T2</div>
-                            <div class="lvl-chip" data-lvl="TP" onclick="this.classList.toggle('active')">TP</div>
+                            <div class="lvl-chip" data-lvl="T2"  onclick="this.classList.toggle('active')">T2</div>
+                            <div class="lvl-chip" data-lvl="TP"  onclick="this.classList.toggle('active')">TP</div>
                             <div class="lvl-chip" data-lvl="TPS" onclick="this.classList.toggle('active')">TPS</div>
                         </div>
                     </div>
 
                     <div class="form-card">
-                        <div class="form-card-header">藥理資料</div>
-                        <div class="form-row">
-                            <label>藥理機轉</label>
-                            <input type="text" id="mechanism" placeholder="簡述作用機制">
-                        </div>
-                        <div class="form-row">
-                            <label>1. 評估使用時機</label>
-                            <textarea id="indications" placeholder="適應症說明"></textarea>
-                        </div>
-                        <div class="form-row">
-                            <label>2. 確認禁忌症</label>
-                            <textarea id="contraindications" placeholder="禁忌症說明"></textarea>
-                        </div>
-                        <div class="form-row">
-                            <label>3. 用藥方式</label>
-                            <input type="text" id="route" placeholder="例如：靜脈推注">
-                        </div>
-                        <div class="form-row">
-                            <label>3-1. 劑量說明</label>
-                            <textarea id="dosage" placeholder="劑量與頻次"></textarea>
-                        </div>
-                        <div class="form-row">
-                            <label>4. 注意事項</label>
-                            <textarea id="precautions" placeholder="特別提醒事項"></textarea>
-                        </div>
+                        <div class="form-card-hdr">藥理資料</div>
+                        <div class="form-row"><label>藥理機轉</label><input type="text" id="mechanism" placeholder="簡述作用機制"></div>
+                        <div class="form-row"><label>1. 評估使用時機</label><textarea id="indications" placeholder="適應症說明"></textarea></div>
+                        <div class="form-row"><label>2. 確認禁忌症</label><textarea id="contraindications" placeholder="禁忌症說明"></textarea></div>
+                        <div class="form-row"><label>3. 用藥方式</label><input type="text" id="route" placeholder="例如：靜脈推注"></div>
+                        <div class="form-row"><label>3-1. 劑量說明</label><textarea id="dosage" placeholder="劑量與頻次"></textarea></div>
+                        <div class="form-row"><label>4. 注意事項</label><textarea id="precautions" placeholder="特別提醒事項"></textarea></div>
                     </div>
 
                     <div class="form-card">
-                        <div class="form-card-header" id="img-label">圖片上傳（必填）</div>
+                        <div class="form-card-hdr" id="img-label">圖片上傳（必填）</div>
                         <div class="form-row">
                             <label>&nbsp;</label>
                             <input type="file" id="imageFile" accept="image/*">
-                            <p id="edit-img-hint" class="file-hint" style="display:none;">留空則保留原圖</p>
+                            <p id="edit-img-hint" style="display:none;font-size:12px;color:var(--label2);padding-bottom:10px;">留空則保留原圖</p>
                         </div>
                     </div>
 
                     <button type="submit" class="btn-primary" id="uploadBtn">儲存藥物</button>
-                    <button type="button" class="btn-primary secondary" id="cancelEditBtn" style="display:none;" onclick="resetFormToNew()">取消修改</button>
+                    <button type="button" class="btn-primary sec" id="cancelEditBtn" style="display:none;" onclick="resetFormToNew()">取消修改</button>
                 </form>
             </div>
 
-            <!-- Section: Edit List -->
+            <!-- Edit list -->
             <div id="admin-edit" class="admin-section">
-                <h3 style="font-size:20px; font-weight:700; color:var(--label); margin-bottom:16px;">選擇要修改的藥物</h3>
-                <div class="form-card">
-                    <div id="edit-list-container" style="padding:16px; color:var(--label2);">載入中…</div>
-                </div>
+                <h3 style="font-size:20px;font-weight:700;color:var(--label);margin-bottom:16px;">選擇要修改的藥物</h3>
+                <div class="form-card"><div id="edit-list-container" style="padding:16px;color:var(--label2);">載入中…</div></div>
             </div>
 
-            <!-- Section: User Management -->
+            <!-- Users -->
             <div id="admin-users" class="admin-section">
-                <h3 style="font-size:20px; font-weight:700; color:var(--label); margin-bottom:16px;">管理員設定</h3>
-                <div class="form-card">
-                    <div id="user-list-container" style="padding:16px; color:var(--label2);">載入中…</div>
-                </div>
+                <h3 style="font-size:20px;font-weight:700;color:var(--label);margin-bottom:16px;">管理員設定</h3>
+                <div class="form-card"><div id="user-list-container" style="padding:16px;color:var(--label2);">載入中…</div></div>
             </div>
         </div>
     </div>
 
-    <!-- ── Tab Bar ────────────────────────────────── -->
+    <!-- Bottom Tab Bar -->
     <div class="tab-bar">
         <div class="tab-item active" id="nav-list" onclick="switchPage('list')">
-            <span class="tab-icon">📖</span>
-            <span>手冊</span>
+            <span class="tab-icon">📖</span><span>手冊</span>
         </div>
         <div class="tab-item" id="tab-admin" onclick="switchPage('admin')">
-            <span class="tab-icon">⚙️</span>
-            <span>後台</span>
+            <span class="tab-icon">⚙️</span><span>後台</span>
         </div>
     </div>
 
-</div><!-- .app -->
+</div>
 
 <script type="module">
     import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -624,29 +442,26 @@
     const SUPER_ADMIN = "Ua1354bdb72c75c5ba123935e29f2b435";
     let currentUserId = "", currentUserName = "";
     let allDrugsData  = [];
-    let isEditing     = false;
-    let editingOldImageUrl = "";
+    let isEditing = false, editingOldImageUrl = "";
     let currentCat = "心臟";
 
-    /* Toast */
-    window.showToast = function(msg) {
+    window.showToast = (msg) => {
         const t = document.getElementById("toast");
         t.innerText = msg;
         t.classList.add("show");
         setTimeout(() => t.classList.remove("show"), 2800);
     };
 
-    /* Init LIFF */
     async function initLiff() {
         try {
             await liff.init({ liffId: "2010390576-JZN69E3p" });
             if (!liff.isLoggedIn()) { liff.login(); return; }
-            const profile = await liff.getProfile();
-            currentUserId  = profile.userId;
-            currentUserName = profile.displayName;
+            const p = await liff.getProfile();
+            currentUserId   = p.userId;
+            currentUserName = p.displayName;
             await checkAndInitAdmin(currentUserId, currentUserName);
             await loadDrugsFromFirebase();
-        } catch (err) { showToast("系統初始化失敗"); }
+        } catch { showToast("系統初始化失敗"); }
     }
 
     async function checkAndInitAdmin(uid, name) {
@@ -664,15 +479,13 @@
             const snap = await getDocs(collection(db, "medications"));
             allDrugsData = [];
             snap.forEach(d => allDrugsData.push(d.data()));
-            document.getElementById("drug-list").innerHTML = "";
             renderDrugList(currentCat);
         } catch {
             document.getElementById("drug-list").innerHTML = `<div class="state-msg">❌ 資料載入失敗</div>`;
         }
     }
 
-    /* Render drug list */
-    window.renderDrugList = function(category) {
+    window.renderDrugList = (category) => {
         currentCat = category;
         const listDiv = document.getElementById("drug-list");
         const drugs   = allDrugsData.filter(d => (d.category || "其他") === category);
@@ -682,10 +495,9 @@
             return;
         }
 
-        const colorMap = { 心臟:"heart", 創傷:"trauma", OHCA:"ohca", 其他:"other", DAI:"dai" };
-        const cls = colorMap[category] || "other";
-
-        const ul = document.createElement("div");
+        const clsMap = { 心臟:"heart", 創傷:"trauma", OHCA:"ohca", 其他:"other", DAI:"dai" };
+        const cls    = clsMap[category] || "other";
+        const ul     = document.createElement("div");
         ul.className = "section-list";
 
         drugs.forEach(data => {
@@ -697,7 +509,7 @@
                     <div class="drug-en">${data.name_en}</div>
                     <div class="drug-zh">${data.name_zh || ""}</div>
                 </div>
-                <span class="drug-chevron">›</span>
+                <span class="drug-chev">›</span>
             `;
             row.onclick = async () => {
                 try {
@@ -713,17 +525,13 @@
         listDiv.appendChild(ul);
     };
 
-    /* Category tabs */
-    window.filterCategory = function(category, el, colorClass) {
-        document.querySelectorAll(".cat-tab").forEach(t => {
-            t.className = "cat-tab " + (t.dataset.color || "");
-        });
+    window.filterCategory = (category, el, colorClass) => {
+        document.querySelectorAll(".book-tab").forEach(t => t.classList.remove("active"));
         el.classList.add("active");
         renderDrugList(category);
     };
 
-    /* Page switching */
-    window.switchPage = function(name) {
+    window.switchPage = (name) => {
         document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
         document.querySelectorAll(".tab-item").forEach(t => t.classList.remove("active"));
         document.getElementById(`page-${name}`).classList.add("active");
@@ -731,8 +539,7 @@
         if (name === "admin") { switchAdminTab("meds"); resetFormToNew(); }
     };
 
-    /* Admin tab switching */
-    window.switchAdminTab = function(tab) {
+    window.switchAdminTab = (tab) => {
         document.querySelectorAll(".admin-section").forEach(s => s.classList.remove("active"));
         document.querySelectorAll(".seg-btn").forEach(b => b.classList.remove("active"));
         document.getElementById(`admin-${tab}`).classList.add("active");
@@ -741,12 +548,10 @@
         if (tab === "users") loadUsersManagement();
     };
 
-    /* Edit list */
-    window.loadEditList = function() {
+    window.loadEditList = () => {
         const c = document.getElementById("edit-list-container");
         if (!allDrugsData.length) { c.textContent = "尚無藥物"; return; }
         c.innerHTML = "";
-        const ul = document.createElement("div");
         allDrugsData.forEach(data => {
             const row = document.createElement("div");
             row.className = "row-item";
@@ -758,20 +563,17 @@
                 <button class="chip-btn chip-edit">編輯</button>
             `;
             row.querySelector("button").onclick = () => fillEditForm(data);
-            ul.appendChild(row);
+            c.appendChild(row);
         });
-        c.appendChild(ul);
     };
 
-    window.fillEditForm = function(data) {
+    window.fillEditForm = (data) => {
         isEditing = true;
         editingOldImageUrl = data.imageUrl || "";
         document.getElementById("form-title").textContent = `修改：${data.name_en}`;
-        document.getElementById("category").value = data.category || "其他";
-        const nameEnInput = document.getElementById("name_en");
-        nameEnInput.value    = data.name_en;
-        nameEnInput.readOnly = true;
-        nameEnInput.style.color = "var(--label2)";
+        document.getElementById("category").value          = data.category || "其他";
+        const ni = document.getElementById("name_en");
+        ni.value = data.name_en; ni.readOnly = true; ni.style.color = "var(--label2)";
         document.getElementById("name_zh").value           = data.name_zh || "";
         document.getElementById("mechanism").value         = data.mechanism || "";
         document.getElementById("indications").value       = data.indications || "";
@@ -779,12 +581,8 @@
         document.getElementById("route").value             = data.route || "";
         document.getElementById("dosage").value            = data.dosage || "";
         document.getElementById("precautions").value       = data.precautions || "";
-
-        const levels = data.levels || "";
-        document.querySelectorAll(".lvl-chip").forEach(b => {
-            b.classList.toggle("active", levels.includes(b.dataset.lvl));
-        });
-
+        const lvls = data.levels || "";
+        document.querySelectorAll(".lvl-chip").forEach(b => b.classList.toggle("active", lvls.includes(b.dataset.lvl)));
         document.getElementById("imageFile").required = false;
         document.getElementById("img-label").textContent = "替換圖片（選填）";
         document.getElementById("edit-img-hint").style.display = "block";
@@ -792,14 +590,12 @@
         switchAdminTab("meds");
     };
 
-    window.resetFormToNew = function() {
-        isEditing = false;
-        editingOldImageUrl = "";
+    window.resetFormToNew = () => {
+        isEditing = false; editingOldImageUrl = "";
         document.getElementById("drugForm").reset();
         document.getElementById("form-title").textContent = "新增藥物";
-        const nameEnInput = document.getElementById("name_en");
-        nameEnInput.readOnly = false;
-        nameEnInput.style.color = "";
+        const ni = document.getElementById("name_en");
+        ni.readOnly = false; ni.style.color = "";
         document.getElementById("imageFile").required = true;
         document.getElementById("img-label").textContent = "圖片上傳（必填）";
         document.getElementById("edit-img-hint").style.display = "none";
@@ -807,59 +603,43 @@
         document.querySelectorAll(".lvl-chip").forEach(b => b.classList.remove("active"));
     };
 
-    /* Form submit */
     document.getElementById("drugForm").addEventListener("submit", async (e) => {
         e.preventDefault();
-        const btn    = document.getElementById("uploadBtn");
-        btn.textContent = "處理中…";
-        btn.disabled = true;
-
-        const nameEn   = document.getElementById("name_en").value.trim();
-        const file     = document.getElementById("imageFile").files[0];
-        const levels   = Array.from(document.querySelectorAll(".lvl-chip.active")).map(b => b.dataset.lvl).join(" | ");
-        const catVal   = document.getElementById("category").value;
-
+        const btn = document.getElementById("uploadBtn");
+        btn.textContent = "處理中…"; btn.disabled = true;
+        const nameEn = document.getElementById("name_en").value.trim();
+        const file   = document.getElementById("imageFile").files[0];
+        const levels = Array.from(document.querySelectorAll(".lvl-chip.active")).map(b => b.dataset.lvl).join(" | ");
+        const catVal = document.getElementById("category").value;
         try {
             let imageUrl = editingOldImageUrl;
             if (file) {
-                const storRef = ref(storage, `medications/${nameEn}_${file.name}`);
-                const snap    = await uploadBytes(storRef, file);
-                imageUrl      = await getDownloadURL(snap.ref);
+                const sRef = ref(storage, `medications/${nameEn}_${file.name}`);
+                const snap = await uploadBytes(sRef, file);
+                imageUrl   = await getDownloadURL(snap.ref);
             }
-
             await setDoc(doc(db, "medications", nameEn), {
-                category: catVal,
-                name_en:  nameEn,
-                name_zh:  document.getElementById("name_zh").value,
-                levels,
-                mechanism:          document.getElementById("mechanism").value,
-                indications:        document.getElementById("indications").value,
-                contraindications:  document.getElementById("contraindications").value,
-                route:              document.getElementById("route").value,
-                dosage:             document.getElementById("dosage").value,
-                precautions:        document.getElementById("precautions").value,
+                category: catVal, name_en: nameEn,
+                name_zh:  document.getElementById("name_zh").value, levels,
+                mechanism:         document.getElementById("mechanism").value,
+                indications:       document.getElementById("indications").value,
+                contraindications: document.getElementById("contraindications").value,
+                route:             document.getElementById("route").value,
+                dosage:            document.getElementById("dosage").value,
+                precautions:       document.getElementById("precautions").value,
                 imageUrl
             }, { merge: true });
-
             showToast(`✅ ${nameEn} 儲存成功`);
-            resetFormToNew();
-            switchPage("list");
+            resetFormToNew(); switchPage("list");
             await loadDrugsFromFirebase();
-
-            // Re-activate the saved category tab
-            document.querySelectorAll(".cat-tab").forEach(t => {
+            document.querySelectorAll(".book-tab").forEach(t => {
                 if (t.dataset.cat === catVal) t.click();
             });
-        } catch (err) {
-            showToast("❌ 錯誤：" + err.message);
-        } finally {
-            btn.textContent = "儲存藥物";
-            btn.disabled = false;
-        }
+        } catch (err) { showToast("❌ " + err.message); }
+        finally { btn.textContent = "儲存藥物"; btn.disabled = false; }
     });
 
-    /* User management */
-    window.loadUsersManagement = async function() {
+    window.loadUsersManagement = async () => {
         const c = document.getElementById("user-list-container");
         c.textContent = "讀取中…";
         try {
@@ -869,49 +649,37 @@
             ]);
             const adminIds = adminsSnap.docs.map(d => d.id);
             const frag = document.createDocumentFragment();
-
             usersSnap.forEach(snap => {
                 const user = snap.data();
                 if (!user.userId) return;
-                const isAdmin      = adminIds.includes(user.userId);
-                const isMe         = user.userId === currentUserId;
-                const isSuperAdmin = user.userId === SUPER_ADMIN;
-
-                const row = document.createElement("div");
+                const isAdmin = adminIds.includes(user.userId);
+                const isMe = user.userId === currentUserId;
+                const isSA = user.userId === SUPER_ADMIN;
+                const row  = document.createElement("div");
                 row.className = "row-item";
-
-                let btnHtml = "";
-                if (isAdmin) {
-                    if (isMe || isSuperAdmin) btnHtml = `<span class="badge-admin">管理員</span>`;
-                    else btnHtml = `<button class="chip-btn chip-revoke" onclick="toggleAdmin('${user.userId}','${user.name||""}',false)">撤銷</button>`;
-                } else {
-                    btnHtml = `<button class="chip-btn chip-grant" onclick="toggleAdmin('${user.userId}','${user.name||""}',true)">授權</button>`;
-                }
-
+                let btn = isAdmin
+                    ? (isMe || isSA ? `<span class="badge-admin">管理員</span>`
+                        : `<button class="chip-btn chip-revoke" onclick="toggleAdmin('${user.userId}','${user.name||""}',false)">撤銷</button>`)
+                    : `<button class="chip-btn chip-grant" onclick="toggleAdmin('${user.userId}','${user.name||""}',true)">授權</button>`;
                 row.innerHTML = `
                     <div class="row-item-text">
                         <div class="row-item-title">${user.name || "未知名稱"}</div>
-                        <div class="row-item-sub">${user.userId.substring(0, 12)}…</div>
+                        <div class="row-item-sub">${user.userId.substring(0,12)}…</div>
                     </div>
-                    <div>${btnHtml}</div>
+                    <div>${btn}</div>
                 `;
                 frag.appendChild(row);
             });
-
             c.innerHTML = "";
-            if (!frag.childElementCount) {
-                c.textContent = "尚無人員資料";
-            } else {
-                c.appendChild(frag);
-            }
+            c.appendChild(frag.childElementCount ? frag : Object.assign(document.createElement("div"), {textContent:"尚無人員資料"}));
         } catch { c.textContent = "讀取失敗"; }
     };
 
-    window.toggleAdmin = async function(uid, name, toGrant) {
+    window.toggleAdmin = async (uid, name, toGrant) => {
         if (!confirm(`確定要將 [${name}] ${toGrant ? "設為管理員" : "撤銷權限"}？`)) return;
         try {
-            if (toGrant) await setDoc(doc(db, "authorized_admins", uid), { name, timestamp: new Date() });
-            else         await deleteDoc(doc(db, "authorized_admins", uid));
+            toGrant ? await setDoc(doc(db, "authorized_admins", uid), { name, timestamp: new Date() })
+                    : await deleteDoc(doc(db, "authorized_admins", uid));
             loadUsersManagement();
         } catch (err) { showToast("設定失敗：" + err.message); }
     };
