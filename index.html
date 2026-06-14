@@ -8,40 +8,41 @@
     <style>
         :root { --primary: #d32f2f; --bg: #f4f6f9; }
         
-        /* 確保螢幕高度 100%，並讓背景為深灰 */
+        /* 確保背景與高度正確 */
         html, body { height: 100%; margin: 0; padding: 0; background-color: #e0e4e8; display: flex; justify-content: center; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; overflow: hidden; }
         
         /* 📖 APP 主容器 (完美適應手機高度並可捲動) */
-        .app-container { width: 100%; max-width: 450px; background-color: var(--bg); height: 100%; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.15); }
+        .app-container { width: 100%; max-width: 480px; background-color: var(--bg); height: 100%; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.15); overflow: hidden;}
 
         /* 頂部導航 */
         .app-header { background-color: var(--primary); color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; flex: 0 0 auto; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         
         /* 頁面共同設定 */
-        .page { display: none; flex: 1 1 auto; overflow-y: auto; position: relative; }
+        .page { display: none; flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; position: relative; padding-bottom: 80px; }
         .page.active { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* --- 頁面1：活頁簿版面 --- */
-        #page-list { padding: 0; } /* 活頁簿不需要外距 */
+        #page-list { padding: 0; padding-bottom: 70px; } 
         .binder-layout { display: flex; height: 100%; width: 100%; }
-        .content-area { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 90px; } /* 留空間給底部導航 */
+        .content-area { flex: 1; overflow-y: auto; padding: 15px; padding-right: 10px; box-sizing: border-box; }
         
         .drug-card { background: white; border-left: 5px solid var(--primary); border-radius: 8px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .drug-card:active { transform: scale(0.98); background-color: #f0f0f0; }
         .drug-info { flex: 1; }
         .drug-en { font-size: 18px; font-weight: bold; color: #333; margin: 0 0 4px 0; }
         .drug-zh { font-size: 14px; color: #777; margin: 0; }
-        .send-icon { color: var(--primary); font-size: 20px; font-weight: bold; background: #ffebee; padding: 8px 12px; border-radius: 20px; }
+        .send-icon { color: var(--primary); font-size: 16px; font-weight: bold; background: #ffebee; padding: 8px 12px; border-radius: 20px; }
 
-        .side-tabs { width: 45px; display: flex; flex-direction: column; justify-content: flex-start; gap: 5px; padding-top: 10px; }
-        .side-tab-btn { flex: 1; max-height: 80px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 16px; border-radius: 12px 0 0 12px; opacity: 0.6; cursor: pointer; box-shadow: -2px 2px 5px rgba(0,0,0,0.1); writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 2px;}
-        .side-tab-btn.active { opacity: 1; width: 50px; transform: translateX(-5px); font-size: 18px; }
+        /* 右側標籤 (修復直排跑版問題) */
+        .side-tabs { width: 45px; display: flex; flex-direction: column; justify-content: flex-start; gap: 8px; padding-top: 15px; flex-shrink: 0; }
+        .side-tab-btn { flex: 1; max-height: 90px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 15px; border-radius: 12px 0 0 12px; opacity: 0.6; cursor: pointer; box-shadow: -2px 2px 5px rgba(0,0,0,0.1); line-height: 1.3;}
+        .side-tab-btn.active { opacity: 1; width: 50px; transform: translateX(-5px); font-size: 16px; }
 
         .bg-heart { background-color: #c62828; } .bg-trauma { background-color: #1565c0; } .bg-ohca { background-color: #212121; } .bg-other { background-color: #2e7d32; } .bg-dai { background-color: #d32f2f; }
 
         /* --- 頁面2：後台管理 --- */
-        #page-admin { padding: 15px; padding-bottom: 90px; } /* 留空間給底部導航 */
+        #page-admin { padding: 15px; padding-bottom: 90px; }
         .admin-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
         label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; font-size: 14px; margin-top: 15px;}
         input[type="text"], textarea, select, input[type="file"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
@@ -66,7 +67,7 @@
         .btn-revoke { background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
 
         /* 底部導航 */
-        .bottom-nav { position: absolute; bottom: 0; left: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 100; padding-bottom: calc(10px + env(safe-area-inset-bottom)); flex: 0 0 auto;}
+        .bottom-nav { position: absolute; bottom: 0; left: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 100; padding-bottom: calc(10px + env(safe-area-inset-bottom)); flex: 0 0 auto; box-sizing: border-box;}
         .nav-item { text-align: center; color: #888; font-size: 12px; flex: 1; cursor: pointer; }
         .nav-item.active { color: var(--primary); font-weight: bold; }
         .nav-icon { font-size: 24px; display: block; margin-bottom: 3px; }
@@ -87,12 +88,13 @@
             <div class="content-area" id="drug-list">
                 <div id="loadingMsg">🔄 資料載入中...</div>
             </div>
+            <!-- 修復直排問題：改用 <br> 強制換行，保證 100% 相容所有手機 -->
             <div class="side-tabs">
-                <div class="side-tab-btn bg-heart active" onclick="filterCategory('心臟', this)">心臟</div>
-                <div class="side-tab-btn bg-trauma" onclick="filterCategory('創傷', this)">創傷</div>
-                <div class="side-tab-btn bg-ohca" onclick="filterCategory('OHCA', this)">OHCA</div>
-                <div class="side-tab-btn bg-other" onclick="filterCategory('其他', this)">其他</div>
-                <div class="side-tab-btn bg-dai" onclick="filterCategory('DAI', this)">DAI</div>
+                <div class="side-tab-btn bg-heart active" onclick="filterCategory('心臟', this)">心<br>臟</div>
+                <div class="side-tab-btn bg-trauma" onclick="filterCategory('創傷', this)">創<br>傷</div>
+                <div class="side-tab-btn bg-ohca" onclick="filterCategory('OHCA', this)">O<br>H<br>C<br>A</div>
+                <div class="side-tab-btn bg-other" onclick="filterCategory('其他', this)">其<br>他</div>
+                <div class="side-tab-btn bg-dai" onclick="filterCategory('DAI', this)">D<br>A<br>I</div>
             </div>
         </div>
     </div>
@@ -123,7 +125,7 @@
                 <label>中文名稱</label>
                 <input type="text" id="name_zh" required>
                 
-                <label>適用層級 (點擊選擇，紅色為選中)</label>
+                <label>適用層級 (沒點灰色，點選變紅色)</label>
                 <div class="level-toggles">
                     <div class="lvl-btn" data-lvl="T2" onclick="this.classList.toggle('active')">T2</div>
                     <div class="lvl-btn" data-lvl="TP" onclick="this.classList.toggle('active')">TP</div>
@@ -161,7 +163,7 @@
 
     <!-- 底部導航 -->
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchPage('list')" id="nav-list"><span class="nav-icon">🏥</span>活頁目錄</div>
+        <div class="nav-item active" onclick="switchPage('list')" id="nav-list"><span class="nav-icon">📖</span>活頁目錄</div>
         <div class="nav-item" onclick="switchPage('admin')" id="adminNav"><span class="nav-icon">⚙️</span>系統管理</div>
     </div>
 
@@ -252,7 +254,7 @@
             if(category === "DAI") borderColor = "#d32f2f";
             
             card.style.borderLeft = `6px solid ${borderColor}`;
-            card.innerHTML = `<div class="drug-info"><h3 class="drug-en">${data.name_en}</h3><p class="drug-zh">${data.name_zh || ''}</p></div><div class="send-icon">➤</div>`;
+            card.innerHTML = `<div class="drug-info"><h3 class="drug-en">${data.name_en}</h3><p class="drug-zh">${data.name_zh || ''}</p></div><div class="send-icon">傳送</div>`;
             listDiv.appendChild(card);
         });
     }
@@ -353,7 +355,7 @@
             switchPage('list'); await loadDrugsFromFirebase();
             
             document.querySelectorAll('.side-tab-btn').forEach(btn => {
-                if(btn.innerText === categoryVal) btn.click();
+                if(btn.innerText.replace(/<br>/g,"").trim() === categoryVal) btn.click();
             });
         } catch (error) { alert("❌ 錯誤：" + error.message); } 
         finally { btn.innerText = "💾 儲存資料"; btn.disabled = false; }
