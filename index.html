@@ -357,6 +357,7 @@
                         <div class="form-row"><label>藥理機轉</label><input type="text" id="mechanism" placeholder="簡述作用機制"></div>
                         <div class="form-row"><label>1. 確認禁忌症</label><textarea id="contraindications" placeholder="禁忌症說明"></textarea></div>
                         <div class="form-row"><label>1-1. 禁忌症補充說明（選填）</label><input type="text" id="ampoule_info" placeholder="例如：1Amp=1mg"></div>
+                        <div class="form-row"><label>1-2. 背面確認禁忌症內容（選填）</label><textarea id="contraindications_check" placeholder="例如：• 對此藥過敏&#10;• 確認是否已使用達最大劑量"></textarea></div>
                         <div class="form-row"><label>2. 評估使用時機</label><textarea id="indications" placeholder="適應症說明"></textarea></div>
                         <div class="form-row"><label>3. 用藥方式</label><input type="text" id="route" placeholder="例如：靜脈推注"></div>
                         <div class="form-row"><label>3-1. 劑量說明</label><textarea id="dosage" placeholder="劑量與頻次"></textarea></div>
@@ -579,8 +580,9 @@
         document.getElementById("name_zh").value           = data.name_zh || "";
         document.getElementById("mechanism").value         = data.mechanism || "";
         document.getElementById("contraindications").value = data.contraindications || "";
-        document.getElementById("ampoule_info").value      = data.ampoule_info || "";
-        document.getElementById("indications").value       = data.indications || "";
+        document.getElementById("ampoule_info").value             = data.ampoule_info || "";
+        document.getElementById("contraindications_check").value  = data.contraindications_check || "";
+        document.getElementById("indications").value              = data.indications || "";
         document.getElementById("route").value             = data.route || "";
         document.getElementById("dosage").value            = data.dosage || "";
         document.getElementById("precautions").value       = data.precautions || "";
@@ -626,8 +628,9 @@
                 name_zh:  document.getElementById("name_zh").value, levels,
                 mechanism:         document.getElementById("mechanism").value,
                 contraindications: document.getElementById("contraindications").value,
-                ampoule_info:      document.getElementById("ampoule_info").value,
-                indications:       document.getElementById("indications").value,
+                ampoule_info:             document.getElementById("ampoule_info").value,
+                contraindications_check:  document.getElementById("contraindications_check").value,
+                indications:              document.getElementById("indications").value,
                 route:             document.getElementById("route").value,
                 dosage:            document.getElementById("dosage").value,
                 precautions:       document.getElementById("precautions").value,
