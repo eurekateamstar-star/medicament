@@ -2,85 +2,98 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>EMS 藥物手冊</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        :root { --primary: #d32f2f; --bg: #f4f6f9; }
+        :root { --primary: #d32f2f; --bg: #f2f2f7; --text-main: #1c1c1e; --text-sub: #8e8e93; }
         
-        /* 確保背景與高度正確 */
-        html, body { height: 100%; margin: 0; padding: 0; background-color: #e0e4e8; display: flex; justify-content: center; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; overflow: hidden; }
+        /* 📱 iOS 風格基礎設定 */
+        html, body { height: 100%; margin: 0; padding: 0; background-color: #d1d1d6; display: flex; justify-content: center; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; overflow: hidden; }
         
-        /* 📖 APP 主容器 (完美適應手機高度並可捲動) */
-        .app-container { width: 100%; max-width: 480px; background-color: var(--bg); height: 100%; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.15); overflow: hidden;}
+        /* 📖 主容器 (模擬手機螢幕) */
+        .app-container { width: 100%; max-width: 430px; background-color: var(--bg); height: 100%; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 30px rgba(0,0,0,0.2); overflow: hidden; }
 
-        /* 頂部導航 */
-        .app-header { background-color: var(--primary); color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; flex: 0 0 auto; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        /* 🔴 頂部導航 (iOS Style) */
+        .app-header { background-color: var(--primary); color: white; padding: 18px 15px; text-align: center; font-size: 18px; font-weight: 600; flex: 0 0 auto; z-index: 10; box-shadow: 0 1px 0 rgba(0,0,0,0.1); letter-spacing: 1px;}
         
-        /* 頁面共同設定 */
-        .page { display: none; flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; position: relative; padding-bottom: 80px; }
-        .page.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .page { display: none; flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; position: relative; padding-bottom: 90px; }
+        .page.active { display: block; animation: slideUp 0.3s cubic-bezier(0.25, 1, 0.5, 1); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- 頁面1：活頁簿版面 --- */
-        #page-list { padding: 0; padding-bottom: 70px; } 
+        /* --- 活頁簿版面 (Modern) --- */
+        #page-list { padding: 0; padding-bottom: 80px; } 
         .binder-layout { display: flex; height: 100%; width: 100%; }
-        .content-area { flex: 1; overflow-y: auto; padding: 15px; padding-right: 10px; box-sizing: border-box; }
+        .content-area { flex: 1; overflow-y: auto; padding: 16px; padding-right: 12px; box-sizing: border-box; }
         
-        .drug-card { background: white; border-left: 5px solid var(--primary); border-radius: 8px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .drug-card:active { transform: scale(0.98); background-color: #f0f0f0; }
+        .drug-card { background: white; border-radius: 14px; padding: 16px; margin-bottom: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-left: 6px solid var(--primary); transition: transform 0.15s ease; }
+        .drug-card:active { transform: scale(0.96); background-color: #fafafa; }
         .drug-info { flex: 1; }
-        .drug-en { font-size: 18px; font-weight: bold; color: #333; margin: 0 0 4px 0; }
-        .drug-zh { font-size: 14px; color: #777; margin: 0; }
-        .send-icon { color: var(--primary); font-size: 16px; font-weight: bold; background: #ffebee; padding: 8px 12px; border-radius: 20px; }
+        .drug-en { font-size: 18px; font-weight: 700; color: var(--text-main); margin: 0 0 4px 0; letter-spacing: 0.5px;}
+        .drug-zh { font-size: 13px; color: var(--text-sub); margin: 0; font-weight: 500;}
+        .send-icon { color: white; font-size: 14px; font-weight: 600; background: var(--primary); padding: 6px 14px; border-radius: 20px; box-shadow: 0 2px 6px rgba(211,47,47,0.3);}
 
-        /* 右側標籤 (修復直排跑版問題) */
-        .side-tabs { width: 45px; display: flex; flex-direction: column; justify-content: flex-start; gap: 8px; padding-top: 15px; flex-shrink: 0; }
-        .side-tab-btn { flex: 1; max-height: 90px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 15px; border-radius: 12px 0 0 12px; opacity: 0.6; cursor: pointer; box-shadow: -2px 2px 5px rgba(0,0,0,0.1); line-height: 1.3;}
-        .side-tab-btn.active { opacity: 1; width: 50px; transform: translateX(-5px); font-size: 16px; }
+        /* 右側標籤 (更圓潤、立體) */
+        .side-tabs { width: 48px; display: flex; flex-direction: column; gap: 8px; padding-top: 16px; flex-shrink: 0; }
+        .side-tab-btn { flex: 1; max-height: 85px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px; border-radius: 14px 0 0 14px; opacity: 0.5; cursor: pointer; box-shadow: -3px 0 10px rgba(0,0,0,0.05); line-height: 1.2; transition: all 0.2s ease;}
+        .side-tab-btn.active { opacity: 1; width: 54px; transform: translateX(-6px); font-size: 16px; box-shadow: -4px 4px 12px rgba(0,0,0,0.15); }
 
-        .bg-heart { background-color: #c62828; } .bg-trauma { background-color: #1565c0; } .bg-ohca { background-color: #212121; } .bg-other { background-color: #2e7d32; } .bg-dai { background-color: #d32f2f; }
+        .bg-heart { background-color: #ff3b30; } .bg-trauma { background-color: #007aff; } .bg-ohca { background-color: #1c1c1e; } .bg-other { background-color: #34c759; } .bg-dai { background-color: #ff9500; }
 
-        /* --- 頁面2：後台管理 --- */
-        #page-admin { padding: 15px; padding-bottom: 90px; }
-        .admin-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; font-size: 14px; margin-top: 15px;}
-        input[type="text"], textarea, select, input[type="file"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
-        textarea { height: 80px; }
-        .submit-btn { background-color: var(--primary); color: white; padding: 12px; width: 100%; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px;}
+        /* --- 後台管理 (iOS Form Style) --- */
+        #page-admin { padding: 16px; padding-bottom: 90px; }
+        .admin-box { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.04); margin-bottom: 20px; }
         
-        .admin-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
-        .tab-btn { flex: 1; padding: 10px; border: none; background: #eee; border-radius: 8px; font-weight: bold; color: #555; cursor: pointer; font-size: 14px;}
-        .tab-btn.active { background: var(--primary); color: white; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; color: var(--text-main); font-size: 13px; margin-top: 18px; text-transform: uppercase; letter-spacing: 0.5px;}
+        input[type="text"], textarea, select, input[type="file"] { width: 100%; padding: 14px; border: 1px solid #e5e5ea; border-radius: 10px; box-sizing: border-box; font-size: 15px; background-color: #f2f2f7; color: var(--text-main); outline: none; transition: 0.2s;}
+        input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--primary); background-color: white; box-shadow: 0 0 0 3px rgba(211,47,47,0.1); }
+        textarea { height: 80px; resize: none; }
+        
+        .submit-btn { background-color: var(--primary); color: white; padding: 16px; width: 100%; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 20px; box-shadow: 0 4px 12px rgba(211,47,47,0.3); transition: 0.15s;}
+        .submit-btn:active { transform: scale(0.97); box-shadow: 0 2px 6px rgba(211,47,47,0.2); }
+        
+        /* 管理員頂部分頁切換 (Segmented Control) */
+        .admin-tabs { display: flex; background: #e5e5ea; border-radius: 10px; padding: 3px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; border-radius: 8px; font-weight: 600; color: var(--text-sub); cursor: pointer; font-size: 13px; transition: 0.2s;}
+        .tab-btn.active { background: white; color: var(--text-main); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
         .admin-section { display: none; }
-        .admin-section.active { display: block; }
+        .admin-section.active { display: block; animation: fadeIn 0.3s; }
 
-        /* 🔘 按鈕式 T2/TP/TPS 標籤 (沒點灰色，有點紅色) */
-        .level-toggles { display: flex; gap: 10px; margin-bottom: 5px; }
-        .lvl-btn { flex: 1; padding: 10px; border-radius: 8px; border: 2px solid #bbb; background: #e0e0e0; color: #666; font-weight: bold; text-align: center; cursor: pointer; transition: 0.2s; }
-        .lvl-btn.active { background: #d32f2f; color: white; border-color: #b71c1c; } /* 點擊後變為紅色 */
+        /* 🔘 APP風 T2/TP/TPS 按鈕 */
+        .level-toggles { display: flex; gap: 8px; margin-bottom: 5px; }
+        .lvl-btn { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #e5e5ea; background: #f2f2f7; color: var(--text-sub); font-weight: 700; font-size: 15px; text-align: center; cursor: pointer; transition: all 0.2s ease; }
+        .lvl-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(211,47,47,0.25); transform: translateY(-2px);} 
 
-        .edit-card { background: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .edit-btn { background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .user-card { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
-        .btn-grant { background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-revoke { background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .edit-card { background: white; padding: 16px; border-radius: 12px; border: 1px solid #e5e5ea; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02);}
+        .edit-btn { background: #007aff; color: white; border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size:13px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,122,255,0.3);}
+        
+        .user-card { background: white; padding: 16px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e5e5ea; box-shadow: 0 2px 6px rgba(0,0,0,0.02);}
+        .btn-grant { background: #34c759; color: white; border: none; padding: 8px 14px; border-radius: 20px; font-weight: 600; font-size:13px; cursor: pointer; }
+        .btn-revoke { background: #ff3b30; color: white; border: none; padding: 8px 14px; border-radius: 20px; font-weight: 600; font-size:13px; cursor: pointer; }
 
-        /* 底部導航 */
-        .bottom-nav { position: absolute; bottom: 0; left: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 100; padding-bottom: calc(10px + env(safe-area-inset-bottom)); flex: 0 0 auto; box-sizing: border-box;}
-        .nav-item { text-align: center; color: #888; font-size: 12px; flex: 1; cursor: pointer; }
-        .nav-item.active { color: var(--primary); font-weight: bold; }
-        .nav-icon { font-size: 24px; display: block; margin-bottom: 3px; }
+        /* 📱 底部導航 (iOS Tab Bar) */
+        .bottom-nav { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid rgba(0,0,0,0.1); z-index: 100; padding-bottom: calc(10px + env(safe-area-inset-bottom)); box-sizing: border-box;}
+        .nav-item { text-align: center; color: #999; font-size: 11px; font-weight: 600; flex: 1; cursor: pointer; transition: 0.2s;}
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 22px; display: block; margin-bottom: 4px; transition: transform 0.2s;}
+        .nav-item.active .nav-icon { transform: scale(1.15); }
         #adminNav { display: none; } 
-        #loadingMsg { text-align: center; color: #888; margin-top: 50px; font-weight: bold; width: 100%; }
+        #loadingMsg { text-align: center; color: var(--text-sub); margin-top: 50px; font-weight: 600; width: 100%; }
+
+        /* 🔔 替換 Alert 的原生 Toast 提示動畫 */
+        #toast { position: absolute; top: -100px; left: 50%; transform: translateX(-50%); background: #1c1c1e; color: white; padding: 14px 24px; border-radius: 30px; font-size: 14px; font-weight: 600; box-shadow: 0 10px 20px rgba(0,0,0,0.2); z-index: 999; transition: top 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); white-space: nowrap; max-width: 90%;}
+        #toast.show { top: 30px; }
     </style>
 </head>
 <body>
 
-<!-- APP 主容器 -->
+<!-- APP 容器 -->
 <div class="app-container">
 
-    <div class="app-header">🚑 EMS 藥物手冊</div>
+    <!-- 🔔 自訂 Toast 提示框 (取代 alert) -->
+    <div id="toast">訊息提示</div>
+
+    <div class="app-header">EMS 藥物手冊</div>
 
     <!-- 頁面 1：活頁簿 -->
     <div id="page-list" class="page active">
@@ -88,7 +101,7 @@
             <div class="content-area" id="drug-list">
                 <div id="loadingMsg">🔄 資料載入中...</div>
             </div>
-            <!-- 修復直排問題：改用 <br> 強制換行，保證 100% 相容所有手機 -->
+            <!-- 標籤 -->
             <div class="side-tabs">
                 <div class="side-tab-btn bg-heart active" onclick="filterCategory('心臟', this)">心<br>臟</div>
                 <div class="side-tab-btn bg-trauma" onclick="filterCategory('創傷', this)">創<br>傷</div>
@@ -101,15 +114,16 @@
 
     <!-- 頁面 2：系統管理 -->
     <div id="page-admin" class="page">
+        <!-- iOS 風格 Segmented Control -->
         <div class="admin-tabs">
-            <button class="tab-btn active" onclick="switchAdminTab('meds')" id="tab-meds">➕ 新增</button>
-            <button class="tab-btn" onclick="switchAdminTab('edit')" id="tab-edit">✏️ 修改</button>
-            <button class="tab-btn" onclick="switchAdminTab('users')" id="tab-users">👤 權限</button>
+            <button class="tab-btn active" onclick="switchAdminTab('meds')" id="tab-meds">新增</button>
+            <button class="tab-btn" onclick="switchAdminTab('edit')" id="tab-edit">修改</button>
+            <button class="tab-btn" onclick="switchAdminTab('users')" id="tab-users">權限</button>
         </div>
 
         <!-- 區塊：新增/修改表單 -->
         <div id="admin-meds" class="admin-section active admin-box">
-            <h3 id="form-title" style="margin-top:0; color:var(--primary);">➕ 新增藥物</h3>
+            <h3 id="form-title" style="margin-top:0; color:var(--text-main); font-size:18px;">新增藥物資料</h3>
             <form id="drugForm">
                 <label>📚 藥物分類 (右側標籤)</label>
                 <select id="category" required>
@@ -117,15 +131,15 @@
                     <option value="創傷">創傷 (藍色)</option>
                     <option value="OHCA">OHCA (黑色)</option>
                     <option value="其他">其他 (綠色)</option>
-                    <option value="DAI">DAI (紅色)</option>
+                    <option value="DAI">DAI (橘紅)</option>
                 </select>
 
                 <label>英文名稱 (必填，將作為系統ID)</label>
-                <input type="text" id="name_en" required>
+                <input type="text" id="name_en" required placeholder="例如：Atropine">
                 <label>中文名稱</label>
-                <input type="text" id="name_zh" required>
+                <input type="text" id="name_zh" required placeholder="例如：阿托品">
                 
-                <label>適用層級 (沒點灰色，點選變紅色)</label>
+                <label>適用層級 (點擊切換)</label>
                 <div class="level-toggles">
                     <div class="lvl-btn" data-lvl="T2" onclick="this.classList.toggle('active')">T2</div>
                     <div class="lvl-btn" data-lvl="TP" onclick="this.classList.toggle('active')">TP</div>
@@ -141,33 +155,33 @@
                 
                 <label id="img-label">📷 圖片上傳 (必填)</label>
                 <input type="file" id="imageFile" accept="image/*">
-                <p id="edit-img-hint" style="display:none; color:#888; font-size:12px; margin-top:2px;">(若不更改圖片，此欄請留空)</p>
+                <p id="edit-img-hint" style="display:none; color:#8e8e93; font-size:12px; margin-top:4px;">(若不更改圖片，此欄請留空)</p>
                 
-                <button type="submit" class="submit-btn" id="uploadBtn">💾 儲存資料</button>
-                <button type="button" class="submit-btn" id="cancelEditBtn" style="display:none; background:#888;" onclick="resetFormToNew()">❌ 取消修改</button>
+                <button type="submit" class="submit-btn" id="uploadBtn">儲存資料</button>
+                <button type="button" class="submit-btn" id="cancelEditBtn" style="display:none; background:#8e8e93; box-shadow:none;" onclick="resetFormToNew()">取消修改</button>
             </form>
         </div>
 
         <!-- 區塊：選擇修改 -->
         <div id="admin-edit" class="admin-section admin-box">
-            <h3 style="margin-top:0; color:var(--primary);">✏️ 點擊要修改的藥物</h3>
+            <h3 style="margin-top:0; color:var(--text-main); font-size:18px;">點擊要修改的藥物</h3>
             <div id="edit-list-container">載入中...</div>
         </div>
 
         <!-- 區塊：權限管理 -->
         <div id="admin-users" class="admin-section admin-box">
-            <h3 style="margin-top:0; color:var(--primary);">👤 權限管理</h3>
+            <h3 style="margin-top:0; color:var(--text-main); font-size:18px;">系統管理員設定</h3>
             <div id="user-list-container">載入中...</div>
         </div>
     </div>
 
-    <!-- 底部導航 -->
+    <!-- 底部導航 (iOS Tab Bar) -->
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchPage('list')" id="nav-list"><span class="nav-icon">📖</span>活頁目錄</div>
-        <div class="nav-item" onclick="switchPage('admin')" id="adminNav"><span class="nav-icon">⚙️</span>系統管理</div>
+        <div class="nav-item active" onclick="switchPage('list')" id="nav-list"><span class="nav-icon">📖</span>目錄</div>
+        <div class="nav-item" onclick="switchPage('admin')" id="adminNav"><span class="nav-icon">⚙️</span>管理</div>
     </div>
 
-</div> <!-- 結束 app-container -->
+</div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -189,21 +203,25 @@
 
     const SUPER_ADMIN = "Ua1354bdb72c75c5ba123935e29f2b435";
     let currentUserId = ""; let currentUserName = "";
-    let allDrugsData = [];
-    let isEditing = false;
-    let editingOldImageUrl = "";
+    let allDrugsData = []; let isEditing = false; let editingOldImageUrl = "";
+
+    // ✨ 專屬 APP 通知動畫 (取代 alert)
+    window.showToast = function(msg) {
+        const toast = document.getElementById("toast");
+        toast.innerText = msg;
+        toast.classList.add("show");
+        setTimeout(() => { toast.classList.remove("show"); }, 3000); // 3秒後消失
+    };
 
     async function initLiff() {
         try {
             await liff.init({ liffId: "2010390576-JZN69E3p" }); 
             if (!liff.isLoggedIn()) { liff.login(); return; }
-
             const profile = await liff.getProfile();
             currentUserId = profile.userId; currentUserName = profile.displayName;
-
             await checkAndInitAdmin(currentUserId, currentUserName);
             await loadDrugsFromFirebase();
-        } catch (err) { alert("系統初始化失敗：" + err); }
+        } catch (err) { showToast("系統初始化失敗"); }
     }
 
     async function checkAndInitAdmin(uid, name) {
@@ -232,7 +250,7 @@
         const filteredDrugs = allDrugsData.filter(d => (d.category || "其他") === category);
 
         if (filteredDrugs.length === 0) {
-            listDiv.innerHTML = `<div style="text-align:center; color:#999; margin-top:50px;">此分類目前無資料</div>`;
+            listDiv.innerHTML = `<div style="text-align:center; color:#8e8e93; margin-top:60px; font-weight:600;">此分類目前無資料</div>`;
             return;
         }
 
@@ -241,20 +259,20 @@
             card.className = "drug-card";
             card.onclick = async () => {
                 try {
-                    if (!liff.isInClient()) { alert("⚠️ 請在 LINE 聊天室開啟"); return; }
+                    if (!liff.isInClient()) { showToast("請在 LINE 聊天室中開啟"); return; }
                     await liff.sendMessages([{ type: "text", text: `藥物查詢: ${data.name_en}` }]);
                     liff.closeWindow();
-                } catch (e) { alert("發送失敗"); }
+                } catch (e) { showToast("發送失敗"); }
             };
             
-            let borderColor = "#2e7d32";
-            if(category === "心臟") borderColor = "#c62828";
-            if(category === "創傷") borderColor = "#1565c0";
-            if(category === "OHCA") borderColor = "#212121";
-            if(category === "DAI") borderColor = "#d32f2f";
+            let borderColor = "#34c759";
+            if(category === "心臟") borderColor = "#ff3b30";
+            if(category === "創傷") borderColor = "#007aff";
+            if(category === "OHCA") borderColor = "#1c1c1e";
+            if(category === "DAI") borderColor = "#ff9500";
             
             card.style.borderLeft = `6px solid ${borderColor}`;
-            card.innerHTML = `<div class="drug-info"><h3 class="drug-en">${data.name_en}</h3><p class="drug-zh">${data.name_zh || ''}</p></div><div class="send-icon">傳送</div>`;
+            card.innerHTML = `<div class="drug-info"><h3 class="drug-en">${data.name_en}</h3><p class="drug-zh">${data.name_zh || ''}</p></div><div class="send-icon">呼叫</div>`;
             listDiv.appendChild(card);
         });
     }
@@ -271,7 +289,7 @@
         allDrugsData.forEach(data => {
             const div = document.createElement("div");
             div.className = "edit-card";
-            div.innerHTML = `<div><b>${data.name_en}</b><br><span style="font-size:12px; color:#888;">${data.name_zh} (${data.category})</span></div><button class="edit-btn">編輯</button>`;
+            div.innerHTML = `<div><b style="color:var(--text-main); font-size:16px;">${data.name_en}</b><br><span style="font-size:13px; color:var(--text-sub);">${data.name_zh} (${data.category})</span></div><button class="edit-btn">編輯</button>`;
             div.querySelector("button").onclick = () => fillEditForm(data);
             container.appendChild(div);
         });
@@ -281,11 +299,11 @@
         isEditing = true;
         editingOldImageUrl = data.imageUrl || "";
 
-        document.getElementById("form-title").innerHTML = `✏️ 修改藥物：${data.name_en}`;
+        document.getElementById("form-title").innerHTML = `修改：${data.name_en}`;
         document.getElementById("category").value = data.category || "其他";
         document.getElementById("name_en").value = data.name_en;
         document.getElementById("name_en").readOnly = true; 
-        document.getElementById("name_en").style.backgroundColor = "#eee";
+        document.getElementById("name_en").style.backgroundColor = "#e5e5ea";
         document.getElementById("name_zh").value = data.name_zh || "";
         document.getElementById("mechanism").value = data.mechanism || "";
         document.getElementById("indications").value = data.indications || "";
@@ -311,20 +329,20 @@
     window.resetFormToNew = function() {
         isEditing = false;
         document.getElementById("drugForm").reset();
-        document.getElementById("form-title").innerHTML = `➕ 新增藥物`;
+        document.getElementById("form-title").innerHTML = `新增藥物資料`;
         document.getElementById("name_en").readOnly = false;
-        document.getElementById("name_en").style.backgroundColor = "white";
+        document.getElementById("name_en").style.backgroundColor = "#f2f2f7";
         document.getElementById("imageFile").required = true;
         document.getElementById("img-label").innerHTML = `📷 圖片上傳 (必填)`;
         document.getElementById("edit-img-hint").style.display = "none";
         document.getElementById("cancelEditBtn").style.display = "none";
-        document.querySelectorAll('.lvl-btn').forEach(btn => btn.classList.remove('active')); // 重置為灰色沒選狀態
+        document.querySelectorAll('.lvl-btn').forEach(btn => btn.classList.remove('active'));
     }
 
     document.getElementById("drugForm").addEventListener("submit", async (e) => {
         e.preventDefault();
         const btn = document.getElementById("uploadBtn");
-        btn.innerText = "🚀 處理中..."; btn.disabled = true;
+        btn.innerText = "處理中..."; btn.disabled = true;
 
         const nameEn = document.getElementById("name_en").value.trim();
         const file = document.getElementById("imageFile").files[0];
@@ -350,15 +368,15 @@
                 imageUrl: finalImageUrl 
             }, { merge: true }); 
 
-            alert(`✅ [${nameEn}] 儲存成功！`);
+            showToast(`✅ [${nameEn}] 儲存成功`);
             resetFormToNew();
             switchPage('list'); await loadDrugsFromFirebase();
             
             document.querySelectorAll('.side-tab-btn').forEach(btn => {
                 if(btn.innerText.replace(/<br>/g,"").trim() === categoryVal) btn.click();
             });
-        } catch (error) { alert("❌ 錯誤：" + error.message); } 
-        finally { btn.innerText = "💾 儲存資料"; btn.disabled = false; }
+        } catch (error) { showToast("❌ 錯誤：" + error.message); } 
+        finally { btn.innerText = "儲存資料"; btn.disabled = false; }
     });
 
     window.switchPage = function(pageName) {
@@ -394,9 +412,9 @@
                 const isSuperAdmin = (user.userId === SUPER_ADMIN);
                 let btnHtml = "";
                 if (isAdmin) {
-                    if (isMe || isSuperAdmin) btnHtml = `<span style="color:#d32f2f; font-size:12px; font-weight:bold;">系統管理員</span>`;
-                    else btnHtml = `<button class="btn-revoke" onclick="toggleAdmin('${user.userId}', '${user.name || '未知'}', false)">撤銷權限</button>`;
-                } else { btnHtml = `<button class="btn-grant" onclick="toggleAdmin('${user.userId}', '${user.name || '未知'}', true)">設為管理</button>`; }
+                    if (isMe || isSuperAdmin) btnHtml = `<span style="color:var(--primary); font-size:12px; font-weight:bold;">系統管理員</span>`;
+                    else btnHtml = `<button class="btn-revoke" onclick="toggleAdmin('${user.userId}', '${user.name || '未知'}', false)">撤銷</button>`;
+                } else { btnHtml = `<button class="btn-grant" onclick="toggleAdmin('${user.userId}', '${user.name || '未知'}', true)">授權</button>`; }
                 html += `<div class="user-card"><div><p class="user-name">${user.name || "未知名稱"}</p><p class="user-id">${user.userId.substring(0, 10)}...</p></div><div>${btnHtml}</div></div>`;
             });
             container.innerHTML = html || "尚無人員";
@@ -409,7 +427,7 @@
             if (toGrant) await setDoc(doc(db, "authorized_admins", targetUid), { name: targetName, timestamp: new Date() });
             else await deleteDoc(doc(db, "authorized_admins", targetUid));
             loadUsersManagement(); 
-        } catch (e) { alert("失敗: " + e.message); }
+        } catch (e) { showToast("設定失敗: " + e.message); }
     }
 
     window.onload = initLiff;
