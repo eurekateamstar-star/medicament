@@ -614,7 +614,7 @@
         e.preventDefault();
         const btn = document.getElementById("uploadBtn");
         btn.textContent = "處理中…"; btn.disabled = true;
-        const nameEn = document.getElementById("name_en").value.trim().replace(/[\\/]/g, "-").replace(/\s+/g, "_");
+        const nameEn = document.getElementById("name_en").value.trim();
         const file   = document.getElementById("imageFile").files[0];
         const levels = Array.from(document.querySelectorAll(".lvl-chip.active")).map(b => b.dataset.lvl).join(" | ");
         const catVal = document.getElementById("category").value;
